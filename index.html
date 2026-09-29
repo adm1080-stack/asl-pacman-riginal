@@ -58,7 +58,30 @@
       text-align: center;
       padding: 15px;
       box-sizing: border-box;
+    }
+
+    .stats-card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      padding: 8px 12px;
+      width: 85%;
+      margin: 10px 0;
+      font-size: 0.85rem;
+      text-align: left;
+    }
+
+    .stats-card strong {
+      color: var(--pacman-color);
+    }
+
+    .win-log {
+      max-height: 60px;
       overflow-y: auto;
+      margin-top: 5px;
+      padding-left: 15px;
+      font-size: 0.8rem;
+      color: #94a3b8;
     }
 
     button.btn {
@@ -70,10 +93,10 @@
       font-weight: bold;
       border-radius: 5px;
       cursor: pointer;
-      margin-top: 10px;
+      margin-top: 5px;
     }
 
-    button.quit-btn {
+    button.pause-btn {
       background-color: var(--quit-color);
       color: #fff;
     }
@@ -128,25 +151,6 @@
       gap: 10px;
       margin-top: 10px;
     }
-
-    .win-list {
-      margin-top: 8px;
-      font-size: 0.8rem;
-      color: #cbd5e1;
-      text-align: left;
-      max-height: 80px;
-      overflow-y: auto;
-      width: 90%;
-      background: #0f172a;
-      padding: 6px 12px;
-      border-radius: 4px;
-      border: 1px solid #334155;
-    }
-
-    .win-list ul {
-      margin: 0;
-      padding-left: 15px;
-    }
   </style>
 </head>
 <body>
@@ -162,10 +166,14 @@
     <div id="overlay">
       <h2 id="overlay-title">ASL Pac-Man</h2>
       <p id="overlay-msg">Use Arrow keys / WASD or buttons to play!</p>
-      
-      <div class="win-list" id="win-history-box">
-        <strong>Saved Victories Log:</strong>
-        <ul id="win-history-list"><li>No wins recorded yet.</li></ul>
+
+      <div class="stats-card">
+        <div><strong>High Score:</strong> <span id="stat-high">0</span></div>
+        <div><strong>Total Board Clears (Wins):</strong> <span id="stat-wins">0</span></div>
+        <div style="margin-top:4px;"><strong>Recent Victories Log:</strong></div>
+        <ul id="win-log-list" class="win-log">
+          <li>No board clears recorded yet.</li>
+        </ul>
       </div>
 
       <button class="btn" onclick="startGame()">Start / Resume</button>
@@ -186,7 +194,7 @@
   </div>
 
   <div class="action-row">
-    <button class="btn quit-btn" onclick="quitGame()">Pause / Quit</button>
+    <button class="btn pause-btn" onclick="pauseGame()">Pause / Menu</button>
   </div>
 
   <script>
@@ -196,7 +204,10 @@
     const overlayTitle = document.getElementById('overlay-title');
     const overlayMsg = document.getElementById('overlay-msg');
     const factDisplay = document.getElementById('fact-display');
-    const winHistoryList = document.getElementById('win-history-list');
+
+    const statHigh = document.getElementById('stat-high');
+    const statWins = document.getElementById('stat-wins');
+    const winLogList = document.getElementById('win-log-list');
 
     const tileSize = 30;
     const gridCols = 11;
@@ -220,10 +231,11 @@
     let currentMap = [];
     let isRunning = false;
     let score = 0;
-    
-    // Memory Persistent Data
-    let highScore = parseInt(localStorage.getItem('asl_pacman_highscore')) || 0;
-    let winHistory = JSON.parse(localStorage.getItem('asl_pacman_win_history')) || [];
+
+    // Saved persistence variables
+    let highScore = parseInt(localStorage.getItem('asl_high_score')) || 0;
+    let totalWins = parseInt(localStorage.getItem('asl_total_wins')) || 0;
+    let winHistory = JSON.parse(localStorage.getItem('asl_win_history')) || [];
 
     let powerMode = false;
     let powerTimer = 0;
@@ -239,16 +251,19 @@
     const pacman = { col: 1, row: 1, dirCol: 0, dirRow: 0 };
     const ghost = { col: 5, row: 5 };
 
-    function renderWinHistory() {
+    function updateStatsUI() {
+      statHigh.innerText = highScore;
+      statWins.innerText = totalWins;
+
       if (winHistory.length === 0) {
-        winHistoryList.innerHTML = '<li>No wins recorded yet.</li>';
-        return;
+        winLogList.innerHTML = '<li>No board clears recorded yet.</li>';
+      } else {
+        winLogList.innerHTML = winHistory
+          .slice(-5)
+          .reverse()
+          .map(item => `<li>Cleared board! Score: ${item.score} (${item.time})</li>`)
+          .join('');
       }
-      winHistoryList.innerHTML = winHistory
-        .slice(-5) // Show last 5 wins
-        .reverse()
-        .map(w => `<li>Win #${w.id} - Score: ${w.score} pts (${w.date})</li>`)
-        .join('');
     }
 
     function setDirection(dc, dr) {
@@ -268,12 +283,9 @@
     });
 
     function startGame() {
-      if (gameInterval) {
-        clearInterval(gameInterval);
-        gameInterval = null;
-      }
+      if (gameInterval) clearInterval(gameInterval);
 
-      // If game was paused, resume without resetting map
+      // Resume if game was paused mid-session
       if (!isRunning && score > 0 && currentMap.length > 0) {
         overlay.style.display = 'none';
         isRunning = true;
@@ -281,7 +293,7 @@
         return;
       }
 
-      // Reset for new round
+      // Reset for a fresh game
       currentMap = JSON.parse(JSON.stringify(mapTemplate));
       pacman.col = 1; pacman.row = 1;
       pacman.dirCol = 0; pacman.dirRow = 0;
@@ -297,24 +309,20 @@
       gameInterval = setInterval(gameStep, 250);
     }
 
-    function quitGame() {
+    function pauseGame() {
       if (!isRunning) return;
-      
-      // Stop the game loop and keep memory state paused
+
       isRunning = false;
-      if (gameInterval) {
-        clearInterval(gameInterval);
-        gameInterval = null;
-      }
-      
-      renderWinHistory();
+      if (gameInterval) clearInterval(gameInterval);
+
+      updateStatsUI();
       overlayTitle.innerText = "Game Paused";
-      overlayMsg.innerText = `Current Score: ${score}\nBest Score: ${highScore}`;
+      overlayMsg.innerText = `Current Score: ${score}`;
       overlay.style.display = 'flex';
     }
 
     function gameStep() {
-      // Move Pac-Man
+      // Move Pacman
       let nextC = pacman.col + pacman.dirCol;
       let nextR = pacman.row + pacman.dirRow;
 
@@ -323,7 +331,7 @@
         pacman.row = nextR;
       }
 
-      // Collect items
+      // Collect Items
       let currentCell = currentMap[pacman.row][pacman.col];
       if (currentCell === 0) {
         currentMap[pacman.row][pacman.col] = 3;
@@ -336,10 +344,10 @@
         factDisplay.innerText = aslFacts[Math.floor(Math.random() * aslFacts.length)];
       }
 
-      // Save real-time high score
+      // Live High Score Update
       if (score > highScore) {
         highScore = score;
-        localStorage.setItem('asl_pacman_highscore', highScore);
+        localStorage.setItem('asl_high_score', highScore);
       }
 
       if (powerMode) {
@@ -367,13 +375,14 @@
         }
       }
 
-      // Check Win Condition
+      // Check Win Condition (Clearing Board)
       let itemsRemaining = false;
       for (let r = 0; r < gridRows; r++) {
         for (let c = 0; c < gridCols; c++) {
           if (currentMap[r][c] === 0 || currentMap[r][c] === 2) itemsRemaining = true;
         }
       }
+      
       if (!itemsRemaining) {
         endGame(true);
         return;
@@ -395,11 +404,11 @@
           if (tile === 1) { // Wall
             ctx.fillStyle = '#1e40af';
             ctx.fillRect(x + 1, y + 1, tileSize - 2, tileSize - 2);
-          } else if (tile === 0) { // ASL Hand Icon
+          } else if (tile === 0) { // ASL Hand
             ctx.font = '14px sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText('🤟', x + 15, y + 15);
+            ctx.fillText('✋', x + 15, y + 15);
           } else if (tile === 2) { // Power Pellet
             ctx.fillStyle = '#38bdf8';
             ctx.beginPath();
@@ -421,7 +430,7 @@
       ctx.arc(ghost.col * tileSize + 15, ghost.row * tileSize + 15, 11, 0, Math.PI * 2);
       ctx.fill();
 
-      // Render Score
+      // Render Score Header
       ctx.fillStyle = '#ffffff';
       ctx.font = '12px sans-serif';
       ctx.textAlign = 'left';
@@ -432,37 +441,37 @@
     function endGame(win) {
       isRunning = false;
       if (gameInterval) clearInterval(gameInterval);
-      
+
       if (win) {
-        score += 200; // Victory bonus
+        score += 200; // Clear-board victory bonus
+        totalWins += 1;
         if (score > highScore) highScore = score;
 
-        // Save victory entry to history array
-        const winRecord = {
-          id: winHistory.length + 1,
+        // Log winning game to stored history
+        winHistory.push({
           score: score,
-          date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        };
-        winHistory.push(winRecord);
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        });
 
-        // Save to LocalStorage
-        localStorage.setItem('asl_pacman_highscore', highScore);
-        localStorage.setItem('asl_pacman_win_history', JSON.stringify(winHistory));
+        // Persist stats in localStorage memory
+        localStorage.setItem('asl_high_score', highScore);
+        localStorage.setItem('asl_total_wins', totalWins);
+        localStorage.setItem('asl_win_history', JSON.stringify(winHistory));
 
         overlayTitle.innerText = "🏆 Victory!";
-        overlayMsg.innerText = `You cleared all ASL signs!\nFinal Score: ${score}\nBest Record: ${highScore}`;
+        overlayMsg.innerText = `Board cleared! Earned +200 bonus!\nFinal Score: ${score}`;
       } else {
         overlayTitle.innerText = "Game Over!";
-        overlayMsg.innerText = `Final Score: ${score}\nBest Record: ${highScore}`;
+        overlayMsg.innerText = `Final Score: ${score}`;
       }
-      
-      renderWinHistory();
+
+      updateStatsUI();
       overlay.style.display = 'flex';
     }
 
     // Initial load setup
     currentMap = JSON.parse(JSON.stringify(mapTemplate));
-    renderWinHistory();
+    updateStatsUI();
     render();
   </script>
 </body>
