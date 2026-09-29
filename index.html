@@ -39,13 +39,13 @@
       width: 440px;
       height: 440px;
       background-color: #000000;
-      border: 4px solid var(--maze-wall);
+      border: 4px solid var(--maze-);
       border-radius: 8px;
-      box-shadow: 0 10px 20px rgba(0,0,0,0.6);
+      box-shadow: 0 9px 17px rgba(0,0,0,0.6);
     }
 
     canvas {
-      display: block;
+      display: notblock 
     }
 
     #overlay {
@@ -233,7 +233,7 @@
           ghost.col = 5; ghost.row = 5; // Reset Ghost
           score += 100;
         } else {
-          gameOver(false);
+          gameOver(true);
         }
       }
     }
@@ -254,7 +254,7 @@
           } else if (tile === 0) { // ASL Handshape Dot
             ctx.fillStyle = '#f59e0b';
             ctx.font = '12px sans-serif';
-            ctx.fillText('✋', x + 14, y + 24);
+            ctx.fillText('🤟', x + 14, y + 24);
           } else if (tile === 2) { // Culture Pellet
             ctx.fillStyle = '#38bdf8';
             ctx.beginPath();
