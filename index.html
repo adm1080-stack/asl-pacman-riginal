@@ -10,9 +10,10 @@
       --maze-wall: #1e40af;
       --pacman-color: #facc15;
       --ghost-color: #ef4444;
-      --pellet-color: #f59e0b;
       --text-color: #f8fafc;
       --quit-color: #ef4444;
+      --card-bg: #1e293b;
+      --card-border: #334155;
     }
 
     body {
@@ -60,28 +61,51 @@
       box-sizing: border-box;
     }
 
+    /* Outer Stats Card & Log */
+    .outer-dashboard {
+      width: 330px;
+      margin-top: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
     .stats-card {
-      background: #1e293b;
-      border: 1px solid #334155;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
       border-radius: 6px;
-      padding: 8px 12px;
-      width: 85%;
-      margin: 10px 0;
-      font-size: 0.85rem;
-      text-align: left;
+      padding: 10px 14px;
+      font-size: 0.9rem;
+      display: flex;
+      justify-content: space-between;
     }
 
     .stats-card strong {
       color: var(--pacman-color);
     }
 
+    .history-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      padding: 10px 14px;
+      font-size: 0.85rem;
+    }
+
+    .history-card header {
+      text-align: left;
+      font-weight: bold;
+      color: var(--pacman-color);
+      margin-bottom: 6px;
+    }
+
     .win-log {
-      max-height: 60px;
+      max-height: 80px;
       overflow-y: auto;
-      margin-top: 5px;
-      padding-left: 15px;
+      margin: 0;
+      padding-left: 18px;
       font-size: 0.8rem;
-      color: #94a3b8;
+      color: #cbd5e1;
     }
 
     button.btn {
@@ -93,7 +117,7 @@
       font-weight: bold;
       border-radius: 5px;
       cursor: pointer;
-      margin-top: 5px;
+      margin-top: 10px;
     }
 
     button.pause-btn {
@@ -103,10 +127,10 @@
 
     .fact-banner {
       width: 330px;
-      min-height: 48px;
+      min-height: 44px;
       margin-top: 10px;
-      background-color: #1e293b;
-      border: 1px solid #334155;
+      background-color: var(--card-bg);
+      border: 1px solid var(--card-border);
       border-radius: 6px;
       padding: 8px 10px;
       box-sizing: border-box;
@@ -157,7 +181,7 @@
 
   <header>
     <h1>ASL Pac-Man</h1>
-    <p>Collect ASL Hand Signs & Culture Pellets while dodging Misconceptions!</p>
+    <p>Collect ASL Hands & Strawberries 🍓 while dodging Misconceptions!</p>
   </header>
 
   <div id="game-container">
@@ -166,22 +190,27 @@
     <div id="overlay">
       <h2 id="overlay-title">ASL Pac-Man</h2>
       <p id="overlay-msg">Use Arrow keys / WASD or buttons to play!</p>
-
-      <div class="stats-card">
-        <div><strong>High Score:</strong> <span id="stat-high">0</span></div>
-        <div><strong>Total Board Clears (Wins):</strong> <span id="stat-wins">0</span></div>
-        <div style="margin-top:4px;"><strong>Recent Victories Log:</strong></div>
-        <ul id="win-log-list" class="win-log">
-          <li>No board clears recorded yet.</li>
-        </ul>
-      </div>
-
       <button class="btn" onclick="startGame()">Start / Resume</button>
     </div>
   </div>
 
+  <!-- OUTSIDE DASHBOARD FOR STATS & WIN HISTORY LOG -->
+  <div class="outer-dashboard">
+    <div class="stats-card">
+      <div><strong>High Score:</strong> <span id="stat-high">0</span></div>
+      <div><strong>Total Wins:</strong> <span id="stat-wins">0</span></div>
+    </div>
+
+    <div class="history-card">
+      <header>🏆 Saved Victories Log:</header>
+      <ul id="win-log-list" class="win-log">
+        <li>No board clears recorded yet.</li>
+      </ul>
+    </div>
+  </div>
+
   <div class="fact-banner" id="fact-display">
-    Eat blue pellets to clear Misconceptions!
+    Eat Strawberries 🍓 to clear Misconceptions!
   </div>
 
   <div class="controls">
@@ -205,6 +234,7 @@
     const overlayMsg = document.getElementById('overlay-msg');
     const factDisplay = document.getElementById('fact-display');
 
+    // External UI references
     const statHigh = document.getElementById('stat-high');
     const statWins = document.getElementById('stat-wins');
     const winLogList = document.getElementById('win-log-list');
@@ -213,7 +243,7 @@
     const gridCols = 11;
     const gridRows = 11;
 
-    // 1 = Wall, 0 = ASL Hand Sign, 2 = Power Pellet, 3 = Empty
+    // 1 = Wall, 0 = ASL Hand Sign (✋), 2 = Strawberry Power Pellet (🍓), 3 = Empty
     const mapTemplate = [
       [1,1,1,1,1,1,1,1,1,1,1],
       [1,2,0,0,0,1,0,0,0,2,1],
@@ -232,7 +262,7 @@
     let isRunning = false;
     let score = 0;
 
-    // Saved persistence variables
+    // Saved Persistence Variables
     let highScore = parseInt(localStorage.getItem('asl_high_score')) || 0;
     let totalWins = parseInt(localStorage.getItem('asl_total_wins')) || 0;
     let winHistory = JSON.parse(localStorage.getItem('asl_win_history')) || [];
@@ -285,7 +315,7 @@
     function startGame() {
       if (gameInterval) clearInterval(gameInterval);
 
-      // Resume if game was paused mid-session
+      // Resume if paused
       if (!isRunning && score > 0 && currentMap.length > 0) {
         overlay.style.display = 'none';
         isRunning = true;
@@ -315,14 +345,13 @@
       isRunning = false;
       if (gameInterval) clearInterval(gameInterval);
 
-      updateStatsUI();
       overlayTitle.innerText = "Game Paused";
       overlayMsg.innerText = `Current Score: ${score}`;
       overlay.style.display = 'flex';
     }
 
     function gameStep() {
-      // Move Pacman
+      // Move Pac-Man
       let nextC = pacman.col + pacman.dirCol;
       let nextR = pacman.row + pacman.dirRow;
 
@@ -333,10 +362,10 @@
 
       // Collect Items
       let currentCell = currentMap[pacman.row][pacman.col];
-      if (currentCell === 0) {
+      if (currentCell === 0) { // ASL Hand
         currentMap[pacman.row][pacman.col] = 3;
         score += 10;
-      } else if (currentCell === 2) {
+      } else if (currentCell === 2) { // Strawberry Power Pellet
         currentMap[pacman.row][pacman.col] = 3;
         score += 50;
         powerMode = true;
@@ -348,6 +377,7 @@
       if (score > highScore) {
         highScore = score;
         localStorage.setItem('asl_high_score', highScore);
+        updateStatsUI();
       }
 
       if (powerMode) {
@@ -375,7 +405,7 @@
         }
       }
 
-      // Check Win Condition (Clearing Board)
+      // Check Win Condition
       let itemsRemaining = false;
       for (let r = 0; r < gridRows; r++) {
         for (let c = 0; c < gridCols; c++) {
@@ -404,16 +434,16 @@
           if (tile === 1) { // Wall
             ctx.fillStyle = '#1e40af';
             ctx.fillRect(x + 1, y + 1, tileSize - 2, tileSize - 2);
-          } else if (tile === 0) { // ASL Hand
+          } else if (tile === 0) { // ASL Hand Icon
             ctx.font = '14px sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText('✋', x + 15, y + 15);
-          } else if (tile === 2) { // Power Pellet
-            ctx.fillStyle = '#38bdf8';
-            ctx.beginPath();
-            ctx.arc(x + 15, y + 15, 7, 0, Math.PI * 2);
-            ctx.fill();
+          } else if (tile === 2) { // Strawberry Power Pellet
+            ctx.font = '16px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('🍓', x + 15, y + 15);
           }
         }
       }
@@ -430,7 +460,7 @@
       ctx.arc(ghost.col * tileSize + 15, ghost.row * tileSize + 15, 11, 0, Math.PI * 2);
       ctx.fill();
 
-      // Render Score Header
+      // Render Live Score Text on top of canvas
       ctx.fillStyle = '#ffffff';
       ctx.font = '12px sans-serif';
       ctx.textAlign = 'left';
@@ -443,17 +473,17 @@
       if (gameInterval) clearInterval(gameInterval);
 
       if (win) {
-        score += 200; // Clear-board victory bonus
+        score += 200; // Clear board victory bonus
         totalWins += 1;
         if (score > highScore) highScore = score;
 
-        // Log winning game to stored history
+        // Log win to history
         winHistory.push({
           score: score,
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         });
 
-        // Persist stats in localStorage memory
+        // Save into local memory
         localStorage.setItem('asl_high_score', highScore);
         localStorage.setItem('asl_total_wins', totalWins);
         localStorage.setItem('asl_win_history', JSON.stringify(winHistory));
@@ -469,7 +499,7 @@
       overlay.style.display = 'flex';
     }
 
-    // Initial load setup
+    // Initial Setup
     currentMap = JSON.parse(JSON.stringify(mapTemplate));
     updateStatsUI();
     render();
