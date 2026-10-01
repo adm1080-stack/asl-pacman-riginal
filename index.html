@@ -7,10 +7,9 @@
   <style>
     :root {
       --bg-color: #0f172a;
-      --maze-wall: #f6ffea;
-      --pacman-color: #C93638;
-      --ghost-color: #eeeeee;
-      --text-color: #ffffff;
+      --maze-wall: #1e40af;
+      --pacman-color: #facc15;
+      --text-color: #f8fafc;
       --quit-color: #ef4444;
       --card-bg: #1e293b;
       --card-border: #334155;
@@ -57,12 +56,12 @@
       justify-content: center;
       align-items: center;
       text-align: center;
-      padding: 17px;
+      padding: 15px;
       box-sizing: border-box;
     }
 
     .username-box {
-      margin: 12px 0;
+      margin: 10px 0;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -72,7 +71,7 @@
 
     .username-box label {
       font-size: 0.85rem;
-      color: #47e5ee;
+      color: #cbd5e1;
     }
 
     .username-box input {
@@ -138,8 +137,8 @@
     .leaderboard-list li {
       display: flex;
       justify-content: space-between;
-      padding: 8px 0;
-      border-bottom: 1px solid #eaef5d;
+      padding: 3px 0;
+      border-bottom: 1px solid #334155;
     }
 
     .leaderboard-list li:last-child {
@@ -148,7 +147,7 @@
 
     button.btn {
       background-color: var(--pacman-color);
-      color: #c93638;
+      color: #000;
       border: none;
       padding: 10px 20px;
       font-size: 1rem;
@@ -191,10 +190,10 @@
     .ctrl-btn {
       width: 50px;
       height: 50px;
-      background-color: #000000;
+      background-color: #334155;
       color: var(--text-color);
       border: 1px solid #475569;
-      border-radius: 8px;
+      border-radius: 6px;
       font-size: 1.2rem;
       font-weight: bold;
       cursor: pointer;
@@ -219,7 +218,7 @@
 
   <header>
     <h1>ASL Pac-Man</h1>
-    <p>Collect ASL Hands ✋ & Strawberries 🍓 to chase ghosts 👻!</p>
+    <p>Collect ASL Hands ✋ & Strawberries 🍓 to finish the maze!</p>
   </header>
 
   <div id="game-container">
@@ -255,7 +254,7 @@
   </div>
 
   <div class="fact-banner" id="fact-display">
-    Eat Strawberries 🍓 to turn Ghost 👻 vulnerable!
+    Collect all ASL Hands ✋ & Strawberries 🍓 to win!
   </div>
 
   <div class="controls">
@@ -307,16 +306,18 @@
     let currentMap = [];
     let isRunning = false;
     let score = 0;
-    let mouthOpenAngle = 0.25;
-    let mouthDirection = 1;
+    
+    // Mouth open/close animation parameters
+    let mouthOpenAngle = 0.2;
+    let mouthDirection = 0.015;
+    const minMouthAngle = 0.02; // Almost closed
+    const maxMouthAngle = 0.35; // Fully open
+
+    let animFrameId = null;
 
     let totalWins = parseInt(localStorage.getItem('asl_total_wins')) || 0;
     let totalLosses = parseInt(localStorage.getItem('asl_total_losses')) || 0;
     let leaderboard = JSON.parse(localStorage.getItem('asl_leaderboard_top10')) || [];
-
-    let powerMode = false;
-    let powerTimer = 0;
-    let ghostInterval = null;
 
     const aslFacts = [
       "Fact: ASL has its own grammar and sentence structure!",
@@ -326,7 +327,6 @@
     ];
 
     const pacman = { col: 1, row: 1, dirCol: 1, dirRow: 0 };
-    const ghost = { col: 5, row: 5 };
 
     window.addEventListener('message', (event) => {
       if (event.data && event.data.type === 'SET_WIX_USER') {
@@ -390,26 +390,17 @@
         pacman.col = nextC;
         pacman.row = nextR;
 
-        mouthOpenAngle += 0.08 * mouthDirection;
-        if (mouthOpenAngle >= 0.35 || mouthOpenAngle <= 0.05) {
-          mouthDirection *= -1;
-        }
-
         let currentCell = currentMap[pacman.row][pacman.col];
         if (currentCell === 0) { // ASL Hand
           currentMap[pacman.row][pacman.col] = 3;
           score += 10;
-        } else if (currentCell === 2) { // Strawberry Power Pellet
+        } else if (currentCell === 2) { // Strawberry
           currentMap[pacman.row][pacman.col] = 3;
           score += 50;
-          powerMode = true;
-          powerTimer = 20; // 20 timer steps
           factDisplay.innerText = aslFacts[Math.floor(Math.random() * aslFacts.length)];
         }
 
-        checkCollision();
         checkWinCondition();
-        render();
       }
     }
 
@@ -421,124 +412,49 @@
       if (e.key === 'ArrowRight' || e.key === 'd') { movePacman(1, 0); e.preventDefault(); }
     });
 
+    function gameLoop() {
+      if (!isRunning) return;
+
+      // Update mouth animation angle
+      mouthOpenAngle += mouthDirection;
+      if (mouthOpenAngle >= maxMouthAngle || mouthOpenAngle <= minMouthAngle) {
+        mouthDirection *= -1;
+      }
+
+      render();
+      animFrameId = requestAnimationFrame(gameLoop);
+    }
+
     function startGame() {
-      if (ghostInterval) clearInterval(ghostInterval);
+      if (animFrameId) cancelAnimationFrame(animFrameId);
 
       if (!isRunning && score > 0 && currentMap.length > 0) {
         overlay.style.display = 'none';
         isRunning = true;
-        ghostInterval = setInterval(ghostStep, 450);
+        animFrameId = requestAnimationFrame(gameLoop);
         return;
       }
 
       currentMap = JSON.parse(JSON.stringify(mapTemplate));
       pacman.col = 1; pacman.row = 1;
       pacman.dirCol = 1; pacman.dirRow = 0;
-      ghost.col = 5; ghost.row = 5;
       score = 0;
-      powerMode = false;
-      powerTimer = 0;
 
       overlay.style.display = 'none';
       isRunning = true;
 
-      render();
-      ghostInterval = setInterval(ghostStep, 450);
+      animFrameId = requestAnimationFrame(gameLoop);
     }
 
     function pauseGame() {
       if (!isRunning) return;
 
       isRunning = false;
-      if (ghostInterval) clearInterval(ghostInterval);
+      if (animFrameId) cancelAnimationFrame(animFrameId);
 
       overlayTitle.innerText = "Game Paused";
       overlayMsg.innerText = `Current Score: ${score}`;
       overlay.style.display = 'flex';
-    }
-
-    // PATHFINDING CHASE AI (Breadth-First Search)
-    function getNextGhostStep(start, target, runAway = false) {
-      const dirs = [{c: 0, r: -1}, {c: 0, r: 1}, {c: -1, r: 0}, {c: 1, r: 0}];
-      
-      if (runAway) {
-        // Find valid adjacent tile that maximizes distance from Pac-Man
-        let bestDir = null;
-        let maxDist = -1;
-        for (let d of dirs) {
-          let nc = start.col + d.c;
-          let nr = start.row + d.r;
-          if (currentMap[nr][nc] !== 1) {
-            let dist = Math.abs(nc - target.col) + Math.abs(nr - target.row);
-            if (dist > maxDist) {
-              maxDist = dist;
-              bestDir = { col: nc, row: nr };
-            }
-          }
-        }
-        return bestDir || start;
-      }
-
-      // BFS to find shortest path to Pac-Man
-      let queue = [[start]];
-      let visited = new Set();
-      visited.add(`${start.col},${start.row}`);
-
-      while (queue.length > 0) {
-        let path = queue.shift();
-        let curr = path[path.length - 1];
-
-        if (curr.col === target.col && curr.row === target.row) {
-          return path.length > 1 ? path[1] : start;
-        }
-
-        for (let d of dirs) {
-          let nc = curr.col + d.c;
-          let nr = curr.row + d.r;
-          let key = `${nc},${nr}`;
-
-          if (currentMap[nr][nc] !== 1 && !visited.has(key)) {
-            visited.add(key);
-            queue.push([...path, { col: nc, row: nr }]);
-          }
-        }
-      }
-      return start;
-    }
-
-    function ghostStep() {
-      if (!isRunning) return;
-
-      if (powerMode) {
-        powerTimer--;
-        if (powerTimer <= 0) {
-          powerMode = false;
-          factDisplay.innerText = "Power expired! Watch out for Ghost 👻!";
-        }
-      }
-
-      // Ghost moves using Pathfinding
-      let nextPos = getNextGhostStep(ghost, pacman, powerMode);
-      ghost.col = nextPos.col;
-      ghost.row = nextPos.row;
-
-      checkCollision();
-      render();
-    }
-
-    function checkCollision() {
-      if (pacman.col === ghost.col && pacman.row === ghost.row) {
-        if (powerMode) {
-          // PAC-MAN EATS GHOST
-          ghost.col = 5; 
-          ghost.row = 5;
-          score += 200;
-          factDisplay.innerText = "Nom nom! You ate Ghost 👻! (+200 pts)";
-        } else {
-          // GHOST EATS PAC-MAN
-          endGame(false);
-        }
-      }
     }
 
     function checkWinCondition() {
@@ -570,7 +486,7 @@
             ctx.font = '15px sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText('🤟', x + 15, y + 15);
+            ctx.fillText('✋', x + 15, y + 15);
           } else if (tile === 2) { // Strawberry
             ctx.font = '16px sans-serif';
             ctx.textAlign = 'center';
@@ -580,7 +496,7 @@
         }
       }
 
-      // Draw Pac-Man with Mouth Rotation
+      // Draw Pac-Man with Mouth Rotation & Chomp Animation
       const pX = pacman.col * tileSize + 15;
       const pY = pacman.row * tileSize + 15;
       let rotationAngle = 0;
@@ -602,12 +518,6 @@
 
       ctx.restore();
 
-      // Render Ghost Emoji 👻 (or 🥶 when vulnerable)
-      ctx.font = '18px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(powerMode ? '🥶' : '👻', ghost.col * tileSize + 15, ghost.row * tileSize + 15);
-
       // Live Score
       ctx.fillStyle = '#ffffff';
       ctx.font = '12px sans-serif';
@@ -618,7 +528,7 @@
 
     function endGame(win) {
       isRunning = false;
-      if (ghostInterval) clearInterval(ghostInterval);
+      if (animFrameId) cancelAnimationFrame(animFrameId);
 
       const playerName = usernameInput.value.trim() || 'Guest';
 
@@ -630,13 +540,6 @@
 
         overlayTitle.innerText = "🏆 Victory!";
         overlayMsg.innerText = `Great job, ${playerName}!\nFinal Score: ${score}`;
-      } else {
-        totalLosses += 1;
-        localStorage.setItem('asl_total_losses', totalLosses);
-        saveScoreToLeaderboard(playerName, score, 'LOSS');
-
-        overlayTitle.innerText = "Game Over!";
-        overlayMsg.innerText = `Better luck next time, ${playerName}!\nFinal Score: ${score}`;
       }
 
       updateStatsUI();
