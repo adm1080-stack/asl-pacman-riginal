@@ -11,38 +11,49 @@
       --pacman-color: #facc15;
       --text-color: #f8fafc;
       --quit-color: #ef4444;
-      --card-bg: #1e293b;
-      --card-border: #334155;
+      --card-bg: rgba(30, 41, 59, 0.85);
+      --card-border: rgba(255, 255, 255, 0.2);
     }
 
     body {
       margin: 0;
       padding: 15px;
-      background-color: var(--bg-color);
+      background-image: url('image_b01065.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
       color: var(--text-color);
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
       user-select: none;
+      min-height: 100vh;
+      box-sizing: border-box;
     }
 
     header {
       text-align: center;
       max-width: 500px;
       margin-bottom: 10px;
+      background: rgba(15, 23, 42, 0.7);
+      padding: 10px 18px;
+      border-radius: 8px;
+      backdrop-filter: blur(5px);
     }
 
-    h1 { color: var(--pacman-color); margin: 0 0 5px 0; }
-    p { color: #94a3b8; font-size: 0.9rem; margin: 0; }
+    h1 { color: var(--pacman-color); margin: 0 0 5px 0; text-shadow: 1px 1px 3px rgba(0,0,0,0.8); }
+    p { color: #e2e8f0; font-size: 0.9rem; margin: 0; }
 
     #game-container {
       position: relative;
       width: 330px;
       height: 330px;
-      background-color: #000000;
+      background-color: rgba(0, 0, 0, 0.9);
       border: 3px solid var(--maze-wall);
       border-radius: 8px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
     }
 
     canvas { display: block; }
@@ -103,6 +114,7 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       grid-gap: 6px;
+      backdrop-filter: blur(6px);
     }
 
     .stats-card strong {
@@ -115,6 +127,7 @@
       border-radius: 6px;
       padding: 10px 14px;
       font-size: 0.85rem;
+      backdrop-filter: blur(6px);
     }
 
     .leaderboard-card header {
@@ -122,6 +135,8 @@
       font-weight: bold;
       color: var(--pacman-color);
       margin-bottom: 6px;
+      background: none;
+      padding: 0;
     }
 
     .leaderboard-list {
@@ -138,7 +153,7 @@
       display: flex;
       justify-content: space-between;
       padding: 3px 0;
-      border-bottom: 1px solid #334155;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
 
     .leaderboard-list li:last-child {
@@ -155,6 +170,7 @@
       border-radius: 5px;
       cursor: pointer;
       margin-top: 10px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
     }
 
     button.pause-btn {
@@ -177,6 +193,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      backdrop-filter: blur(6px);
     }
 
     .controls {
@@ -190,9 +207,9 @@
     .ctrl-btn {
       width: 50px;
       height: 50px;
-      background-color: #334155;
+      background-color: rgba(51, 65, 85, 0.85);
       color: var(--text-color);
-      border: 1px solid #475569;
+      border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: 6px;
       font-size: 1.2rem;
       font-weight: bold;
@@ -200,6 +217,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      backdrop-filter: blur(4px);
     }
 
     .ctrl-btn:active {
@@ -218,7 +236,7 @@
 
   <header>
     <h1>ASL Pac-Man</h1>
-    <p>Chase down Ghost 👻 and collect ✋ & 🍓 to win!</p>
+    <p>Avoid 👻! Eat 🍓 to turn the tables and catch the ghost!</p>
   </header>
 
   <div id="game-container">
@@ -226,7 +244,7 @@
     
     <div id="overlay">
       <h2 id="overlay-title">ASL Pac-Man</h2>
-      <p id="overlay-msg">Use Arrow keys / WASD or buttons to move and chase 👻!</p>
+      <p id="overlay-msg">Avoid Ghost 👻! Eat Strawberry 🍓 for Power Mode!</p>
 
       <div class="username-box" id="username-container">
         <label for="player-username">Player Name (Guest Mode):</label>
@@ -254,7 +272,7 @@
   </div>
 
   <div class="fact-banner" id="fact-display">
-    Chase Ghost 👻 for bonus points!
+    Collect all ASL Hands ✋ & Strawberries 🍓 to win!
   </div>
 
   <div class="controls">
@@ -403,11 +421,11 @@
           currentMap[pacman.row][pacman.col] = 3;
           score += 50;
           powerMode = true;
-          powerTimer = 20; // 20 steps duration
-          factDisplay.innerText = aslFacts[Math.floor(Math.random() * aslFacts.length)];
+          powerTimer = 25;
+          factDisplay.innerText = "POWER MODE! 🍓 Eat the ghost 🥶!";
         }
 
-        checkCatchGhost();
+        checkCollision();
         checkWinCondition();
       }
     }
@@ -420,7 +438,6 @@
       if (e.key === 'ArrowRight' || e.key === 'd') { movePacman(1, 0); e.preventDefault(); }
     });
 
-    // Ghost roams away or randomly, waiting to be caught by Pac-Man
     function moveGhost() {
       if (!isRunning) return;
 
@@ -428,7 +445,7 @@
         powerTimer--;
         if (powerTimer <= 0) {
           powerMode = false;
-          factDisplay.innerText = "Keep chasing Ghost 👻!";
+          factDisplay.innerText = "Power Mode expired! Watch out for 👻!";
         }
       }
 
@@ -436,21 +453,30 @@
       let validMoves = dirs.filter(d => currentMap[ghost.row + d.r][ghost.col + d.c] !== 1);
 
       if (validMoves.length > 0) {
-        let chosen = validMoves[Math.floor(Math.random() * validMoves.length)];
+        validMoves.sort((a, b) => {
+          let distA = Math.hypot((ghost.col + a.c) - pacman.col, (ghost.row + a.r) - pacman.row);
+          let distB = Math.hypot((ghost.col + b.c) - pacman.col, (ghost.row + b.r) - pacman.row);
+          return powerMode ? distB - distA : distA - distB;
+        });
+
+        let chosen = (Math.random() < 0.8) ? validMoves[0] : validMoves[Math.floor(Math.random() * validMoves.length)];
         ghost.col += chosen.c;
         ghost.row += chosen.r;
       }
 
-      checkCatchGhost();
+      checkCollision();
     }
 
-    function checkCatchGhost() {
+    function checkCollision() {
       if (pacman.col === ghost.col && pacman.row === ghost.row) {
-        const bonus = powerMode ? 400 : 200;
-        score += bonus;
-        ghost.col = 5;
-        ghost.row = 5;
-        factDisplay.innerText = `Caught Ghost! 👻 (+${bonus} pts)`;
+        if (powerMode) {
+          score += 200;
+          ghost.col = 5;
+          ghost.row = 5;
+          factDisplay.innerText = "Ate Ghost! 👻 (+200 pts)";
+        } else {
+          endGame(false);
+        }
       }
     }
 
@@ -474,7 +500,7 @@
         overlay.style.display = 'none';
         isRunning = true;
         animFrameId = requestAnimationFrame(gameLoop);
-        ghostInterval = setInterval(moveGhost, 500);
+        ghostInterval = setInterval(moveGhost, 450);
         return;
       }
 
@@ -490,7 +516,7 @@
       isRunning = true;
 
       animFrameId = requestAnimationFrame(gameLoop);
-      ghostInterval = setInterval(moveGhost, 500);
+      ghostInterval = setInterval(moveGhost, 450);
     }
 
     function pauseGame() {
@@ -534,8 +560,8 @@
             ctx.font = '15px sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText('✋', x + 15, y + 15);
-          } else if (tile === 2) { // Strawberry
+            ctx.fillText('🤟', x + 15, y + 15);
+          } else if (tile === 2) { // Strawberry Power Pellet
             ctx.font = '16px sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
@@ -544,7 +570,7 @@
         }
       }
 
-      // Draw Ghost Emoji 👻 (or 🥶 when vulnerable/scared)
+      // Draw Ghost (👻 standard, 🥶 scared)
       ctx.font = '18px sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
@@ -595,6 +621,13 @@
 
         overlayTitle.innerText = "🏆 Victory!";
         overlayMsg.innerText = `Great job, ${playerName}!\nFinal Score: ${score}`;
+      } else {
+        totalLosses += 1;
+        localStorage.setItem('asl_total_losses', totalLosses);
+        saveScoreToLeaderboard(playerName, score, 'LOSS');
+
+        overlayTitle.innerText = "👻 Game Over!";
+        overlayMsg.innerText = `Ghost caught you, ${playerName}!\nFinal Score: ${score}`;
       }
 
       updateStatsUI();
