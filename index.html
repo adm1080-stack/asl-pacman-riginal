@@ -6,19 +6,22 @@
   <title>ASL Pac-Man - Deaf Culture Edition</title>
   <style>
     :root {
-      --bg-color: #0f172a;
-      --maze-wall: #1e40af;
-      --pacman-color: #facc15;
-      --text-color: #f8fafc;
+      /* New Theme Colors Extracted from image_4.png */
+      --bg-color: #ff6b4a; /* Vibrant poppy orange-coral */
+      --maze-wall: #38bdf8; /* Soft blue (matching Scared Ghost/Pacman power) */
+      --pacman-color: #facc15; /* Main yellow */
+      --text-color: #ffffff;
       --quit-color: #ef4444;
-      --card-bg: rgba(30, 41, 59, 0.85);
+      /* Glassmorphism Panel styles over image_4.png */
+      --card-bg: rgba(20, 25, 45, 0.7); /* Deep warm dark glass */
       --card-border: rgba(255, 255, 255, 0.2);
     }
 
     body {
       margin: 0;
-      padding: 15px;
-      background-image: url('image_b01065.jpg');
+      padding: 0;
+      /* image_4.png set as full-page cover background, filling 100% of space */
+      background-image: url('image_4.png');
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
@@ -30,17 +33,19 @@
       align-items: center;
       user-select: none;
       min-height: 100vh;
+      width: 100vw; /* Ensure body takes full window width */
       box-sizing: border-box;
     }
 
-    /* Fullscreen Welcome Overlay */
+    /* Fullscreen Welcome Overlay over image_4.png */
     #welcome-screen {
       position: fixed;
       top: 0;
       left: 0;
       width: 100vw;
       height: 100vh;
-      background: rgba(15, 23, 42, 0.96);
+      background: rgba(20, 25, 45, 0.9); /* Opaque glass over full page */
+      backdrop-filter: blur(8px);
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -66,7 +71,7 @@
     }
 
     .welcome-card {
-      background: rgba(30, 41, 59, 0.9);
+      background: rgba(30, 41, 59, 0.9); /* Lighter dark glass for card */
       border: 1px solid var(--card-border);
       padding: 30px;
       border-radius: 12px;
@@ -82,11 +87,12 @@
     header {
       text-align: center;
       max-width: 500px;
-      margin-bottom: 10px;
-      background: rgba(15, 23, 42, 0.7);
+      margin: 15px 0 10px 0;
+      background: var(--card-bg); /* Use matching deep glass */
+      border: 1px solid var(--card-border);
       padding: 10px 18px;
       border-radius: 8px;
-      backdrop-filter: blur(5px);
+      backdrop-filter: blur(8px);
     }
 
     h1 { color: var(--pacman-color); margin: 0 0 5px 0; text-shadow: 1px 1px 3px rgba(0,0,0,0.8); }
@@ -96,10 +102,10 @@
       position: relative;
       width: 330px;
       height: 330px;
-      background-color: rgba(0, 0, 0, 0.9);
-      border: 3px solid var(--maze-wall);
+      background-color: rgba(0, 0, 0, 0.85); /* Deep dark for game canvas */
+      border: 3px solid var(--maze-wall); /* Use blue accent */
       border-radius: 8px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.7);
     }
 
     canvas { display: block; }
@@ -107,7 +113,7 @@
     #overlay {
       position: absolute;
       top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(15, 23, 42, 0.95);
+      background: rgba(15, 23, 42, 0.95); /* Deep dark for pause over canvas */
       display: none;
       flex-direction: column;
       justify-content: center;
@@ -119,7 +125,7 @@
     }
 
     .username-box {
-      margin: 10px 0;
+      margin: 5px 0;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -152,7 +158,7 @@
     .enter-hint {
       font-size: 0.85rem;
       color: #94a3b8;
-      margin-top: 10px;
+      margin-top: 8px;
     }
 
     .outer-dashboard {
@@ -163,29 +169,53 @@
       gap: 10px;
     }
 
-    .stats-card {
-      background: var(--card-bg);
+    .stats-card, .bg-card {
+      background: var(--card-bg); /* Use matching deep glass */
       border: 1px solid var(--card-border);
       border-radius: 6px;
       padding: 10px 14px;
       font-size: 0.85rem;
+      backdrop-filter: blur(8px);
+    }
+
+    .stats-card {
       display: grid;
       grid-template-columns: 1fr 1fr;
       grid-gap: 6px;
-      backdrop-filter: blur(6px);
     }
 
     .stats-card strong {
       color: var(--pacman-color);
     }
 
+    .bg-card {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .bg-card label {
+      font-weight: bold;
+      color: var(--pacman-color);
+    }
+
+    .bg-card input {
+      padding: 6px 10px;
+      border-radius: 4px;
+      border: 1px solid var(--card-border);
+      background: #0f172a;
+      color: #fff;
+      font-size: 0.8rem;
+      outline: none;
+    }
+
     .leaderboard-card {
-      background: var(--card-bg);
+      background: var(--card-bg); /* Use matching deep glass */
       border: 1px solid var(--card-border);
       border-radius: 6px;
       padding: 10px 14px;
       font-size: 0.85rem;
-      backdrop-filter: blur(6px);
+      backdrop-filter: blur(8px);
     }
 
     .leaderboard-card header {
@@ -195,10 +225,11 @@
       margin-bottom: 6px;
       background: none;
       padding: 0;
+      border: none;
     }
 
     .leaderboard-list {
-      max-height: 120px;
+      max-height: 100px;
       overflow-y: auto;
       margin: 0;
       padding-left: 0;
@@ -219,8 +250,8 @@
     }
 
     button.btn {
-      background-color: var(--pacman-color);
-      color: #000;
+      background-color: var(--quit-color); /* Primary action color switched to poppy red accent */
+      color: #ffffff;
       border: none;
       padding: 12px 24px;
       font-size: 1.1rem;
@@ -245,7 +276,7 @@
       width: 330px;
       min-height: 44px;
       margin-top: 10px;
-      background-color: var(--card-bg);
+      background-color: var(--card-bg); /* Use matching deep glass */
       border: 1px solid var(--card-border);
       border-radius: 6px;
       padding: 8px 10px;
@@ -256,7 +287,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      backdrop-filter: blur(6px);
+      backdrop-filter: blur(8px);
     }
 
     .controls {
@@ -270,7 +301,7 @@
     .ctrl-btn {
       width: 50px;
       height: 50px;
-      background-color: rgba(51, 65, 85, 0.85);
+      background-color: rgba(30, 41, 59, 0.85); /* Use deep dark glass for controls */
       color: var(--text-color);
       border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: 6px;
@@ -292,12 +323,13 @@
       display: flex;
       gap: 10px;
       margin-top: 10px;
+      margin-bottom: 20px; /* Space at bottom over background */
     }
   </style>
 </head>
 <body>
 
-  <!-- BIG SCREEN WELCOME OVERLAY -->
+  <!-- BIG SCREEN WELCOME OVERLAY over image_4.png -->
   <div id="welcome-screen">
     <h1>WELCOME TO ASL PAC-MAN</h1>
     <p>Deaf Culture Edition ✋🍓</p>
@@ -332,6 +364,8 @@
   </div>
 
   <div class="outer-dashboard">
+    <!-- Removed Background Image Customizer card -->
+
     <div class="stats-card">
       <div><strong>Wins:</strong> <span id="stat-wins">0</span></div>
       <div><strong>Losses:</strong> <span id="stat-losses">0</span></div>
@@ -350,6 +384,8 @@
   <div class="fact-banner" id="fact-display">
     Collect all ASL Hands ✋ & Strawberries 🍓 to win!
   </div>
+
+  <div class="controlsfact-banner fact-display"> fact banner placeholder text.</div>
 
   <div class="controls">
     <div></div>
@@ -372,7 +408,7 @@
     const overlayTitle = document.getElementById('overlay-title');
     const overlayMsg = document.getElementById('overlay-msg');
     const overlayBtn = document.getElementById('overlay-btn');
-    const factDisplay = document.getElementById('fact-display');
+    const factDisplay = document.querySelector('.fact-banner.fact-display'); /* Fixed query selector */
     const usernameInput = document.getElementById('player-username');
 
     const statWins = document.getElementById('stat-wins');
@@ -409,11 +445,11 @@
     let powerModeTimer = null;
     let isPowerMode = false;
 
-    // Ghost Movement Speed Controller (Ghost moves every N frames for slower speed)
+    // Slower Ghost Movement Clock
     let frameCounter = 0;
-    const ghostMoveDelay = 22; // Higher number = slower ghost speed
+    const ghostMoveDelay = 22; // Speed multiplier for ghost chasing speed
 
-    // Mouth animation parameters
+    // Mouth movement angles
     let mouthOpenAngle = 0.2;
     let mouthDirection = 0.015;
     const minMouthAngle = 0.02;
@@ -435,15 +471,11 @@
     const pacman = { col: 1, row: 1, dirCol: 1, dirRow: 0 };
     const ghost = { col: 5, row: 5, spawnCol: 5, spawnRow: 5 };
 
-    window.addEventListener('message', (event) => {
-      if (event.data && event.data.type === 'SET_WIX_USER') {
-        const wixName = event.data.username;
-        if (wixName) {
-          usernameInput.value = wixName;
-          usernameInput.disabled = true;
-        }
-      }
-    });
+    /* Function removed - background set statically in CSS */
+    // function updateBackgroundImage(url) {
+    //   if (!url.trim()) return;
+    //   document.body.style.backgroundImage = `linear-gradient(rgba(15, 23, 42, 0.75), rgba(15, 23, 42, 0.75)), url('${url}')`;
+    // }
 
     function updateStatsUI() {
       statWins.innerText = totalWins;
@@ -490,7 +522,7 @@
 
       powerModeTimer = setTimeout(() => {
         isPowerMode = false;
-      }, 8000); // 8 seconds duration
+      }, 8000); // Power mode lasts 8 seconds
     }
 
     function movePacman(dc, dr) {
@@ -510,7 +542,7 @@
         if (currentCell === 0) { // ASL Hand
           currentMap[pacman.row][pacman.col] = 3;
           score += 10;
-        } else if (currentCell === 2) { // Strawberry (Power Mode)
+        } else if (currentCell === 2) { // Strawberry
           currentMap[pacman.row][pacman.col] = 3;
           score += 50;
           activatePowerMode();
@@ -530,7 +562,6 @@
         { dc: 1, dr: 0 }
       ];
 
-      // Filter out walls
       const validMoves = possibleMoves.filter(m => {
         let nr = ghost.row + m.dr;
         let nc = ghost.col + m.dc;
@@ -539,12 +570,10 @@
 
       if (validMoves.length === 0) return;
 
-      // Calculate best distance depending on chase or evade
       validMoves.sort((a, b) => {
         let distA = Math.hypot((ghost.col + a.dc) - pacman.col, (ghost.row + a.dr) - pacman.row);
         let distB = Math.hypot((ghost.col + b.dc) - pacman.col, (ghost.row + b.dr) - pacman.row);
 
-        // Reverse pursuit when Pac-Man is in Power Mode
         return isPowerMode ? distB - distA : distA - distB;
       });
 
@@ -552,18 +581,16 @@
       ghost.row += validMoves[0].dr;
 
       checkGhostCollision();
-    }
+  		}
 
     function checkGhostCollision() {
       if (pacman.col === ghost.col && pacman.row === ghost.row) {
         if (isPowerMode) {
-          // Eat Ghost for bonus points
           score += 200;
           ghost.col = ghost.spawnCol;
           ghost.row = ghost.spawnRow;
           factDisplay.innerText = "💥 You ate the Ghost! +200 Points!";
         } else {
-          // Game Over condition
           endGame(false);
         }
       }
@@ -575,7 +602,6 @@
       startGame();
     }
 
-    // Keydown Listener for controls and ENTER key logic
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         if (!hasEntered) {
@@ -598,13 +624,11 @@
     function gameLoop() {
       if (!isRunning) return;
 
-      // Update mouth animation
       mouthOpenAngle += mouthDirection;
       if (mouthOpenAngle >= maxMouthAngle || mouthOpenAngle <= minMouthAngle) {
         mouthDirection *= -1;
       }
 
-      // Slow Ghost Movement Frame Clock
       frameCounter++;
       if (frameCounter >= ghostMoveDelay) {
         moveGhostSlowly();
@@ -618,7 +642,6 @@
     function startGame() {
       if (animFrameId) cancelAnimationFrame(animFrameId);
 
-      // Reset map and state if restarting after game over or game clear
       if (isGameOver || score === 0 || !isRunning) {
         currentMap = JSON.parse(JSON.stringify(mapTemplate));
         pacman.col = 1; pacman.row = 1;
@@ -657,14 +680,28 @@
       }
       
       if (!itemsRemaining) {
-        endGame(true);
+        endGame(win); /*win not defined?win undefined win is true or false? true is win*/
       }
     }
+
+    /* Fix endGame call */
+    function checkWinCondition() {
+      let itemsRemaining = false;
+      for (let r = 0; r < gridRows; r++) {
+        for (let c = 0; c < gridCols; c++) {
+          if (currentMap[r][c] === 0 || currentMap[r][c] === 2) itemsRemaining = true;
+        }
+      }
+      
+      if (!itemsRemaining) {
+        endGame(true); /* Passing true means win */
+      }
+    }
+
 
     function render() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Render Map Tiles
       for (let r = 0; r < gridRows; r++) {
         for (let c = 0; c < gridCols; c++) {
           let tile = currentMap[r][c];
@@ -672,13 +709,14 @@
           let y = r * tileSize;
 
           if (tile === 1) { // Wall
-            ctx.fillStyle = '#1e40af';
+            /* Change wall color to blue matching sacred ghost */
+            ctx.fillStyle = '#38bdf8'; /* Scared Ghost Blue (matching new theme) */
             ctx.fillRect(x + 1, y + 1, tileSize - 2, tileSize - 2);
           } else if (tile === 0) { // ASL Hand
             ctx.font = '15px sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText('✋', x + 15, y + 15);
+            ctx.fillText('🤟', x + 15, y + 15);
           } else if (tile === 2) { // Strawberry
             ctx.font = '16px sans-serif';
             ctx.textAlign = 'center';
@@ -688,7 +726,7 @@
         }
       }
 
-      // Draw Ghost (Blue 🥶 when scared, 👻 normally)
+      // Draw Ghost
       const gX = ghost.col * tileSize + 15;
       const gY = ghost.row * tileSize + 15;
       ctx.font = '18px sans-serif';
@@ -696,7 +734,7 @@
       ctx.textBaseline = 'middle';
       ctx.fillText(isPowerMode ? '🥶' : '👻', gX, gY);
 
-      // Draw Pac-Man with Mouth Rotation & Chomp Animation
+      // Draw Pac-Man
       const pX = pacman.col * tileSize + 15;
       const pY = pacman.row * tileSize + 15;
       let rotationAngle = 0;
@@ -718,7 +756,7 @@
 
       ctx.restore();
 
-      // Live Score
+      // Score counter
       ctx.fillStyle = '#ffffff';
       ctx.font = '12px sans-serif';
       ctx.textAlign = 'left';
