@@ -218,7 +218,7 @@
 
   <header>
     <h1>ASL Pac-Man</h1>
-    <p>Collect ASL Hands ✋ & Strawberries 🍓 to finish the maze!</p>
+    <p>Chase down Ghost 👻 and collect ✋ & 🍓 to win!</p>
   </header>
 
   <div id="game-container">
@@ -226,7 +226,7 @@
     
     <div id="overlay">
       <h2 id="overlay-title">ASL Pac-Man</h2>
-      <p id="overlay-msg">Use Arrow keys / WASD or buttons to move!</p>
+      <p id="overlay-msg">Use Arrow keys / WASD or buttons to move and chase 👻!</p>
 
       <div class="username-box" id="username-container">
         <label for="player-username">Player Name (Guest Mode):</label>
@@ -254,7 +254,7 @@
   </div>
 
   <div class="fact-banner" id="fact-display">
-    Collect all ASL Hands ✋ & Strawberries 🍓 to win!
+    Chase Ghost 👻 for bonus points!
   </div>
 
   <div class="controls">
@@ -310,10 +310,14 @@
     // Mouth open/close animation parameters
     let mouthOpenAngle = 0.2;
     let mouthDirection = 0.015;
-    const minMouthAngle = 0.02; // Almost closed
-    const maxMouthAngle = 0.35; // Fully open
+    const minMouthAngle = 0.02;
+    const maxMouthAngle = 0.35;
 
     let animFrameId = null;
+    let ghostInterval = null;
+
+    let powerMode = false;
+    let powerTimer = 0;
 
     let totalWins = parseInt(localStorage.getItem('asl_total_wins')) || 0;
     let totalLosses = parseInt(localStorage.getItem('asl_total_losses')) || 0;
@@ -327,6 +331,7 @@
     ];
 
     const pacman = { col: 1, row: 1, dirCol: 1, dirRow: 0 };
+    const ghost = { col: 5, row: 5 };
 
     window.addEventListener('message', (event) => {
       if (event.data && event.data.type === 'SET_WIX_USER') {
@@ -394,12 +399,15 @@
         if (currentCell === 0) { // ASL Hand
           currentMap[pacman.row][pacman.col] = 3;
           score += 10;
-        } else if (currentCell === 2) { // Strawberry
+        } else if (currentCell === 2) { // Strawberry Power Pellet
           currentMap[pacman.row][pacman.col] = 3;
           score += 50;
+          powerMode = true;
+          powerTimer = 20; // 20 steps duration
           factDisplay.innerText = aslFacts[Math.floor(Math.random() * aslFacts.length)];
         }
 
+        checkCatchGhost();
         checkWinCondition();
       }
     }
@@ -412,10 +420,43 @@
       if (e.key === 'ArrowRight' || e.key === 'd') { movePacman(1, 0); e.preventDefault(); }
     });
 
+    // Ghost roams away or randomly, waiting to be caught by Pac-Man
+    function moveGhost() {
+      if (!isRunning) return;
+
+      if (powerMode) {
+        powerTimer--;
+        if (powerTimer <= 0) {
+          powerMode = false;
+          factDisplay.innerText = "Keep chasing Ghost 👻!";
+        }
+      }
+
+      const dirs = [{c: 0, r: -1}, {c: 0, r: 1}, {c: -1, r: 0}, {c: 1, r: 0}];
+      let validMoves = dirs.filter(d => currentMap[ghost.row + d.r][ghost.col + d.c] !== 1);
+
+      if (validMoves.length > 0) {
+        let chosen = validMoves[Math.floor(Math.random() * validMoves.length)];
+        ghost.col += chosen.c;
+        ghost.row += chosen.r;
+      }
+
+      checkCatchGhost();
+    }
+
+    function checkCatchGhost() {
+      if (pacman.col === ghost.col && pacman.row === ghost.row) {
+        const bonus = powerMode ? 400 : 200;
+        score += bonus;
+        ghost.col = 5;
+        ghost.row = 5;
+        factDisplay.innerText = `Caught Ghost! 👻 (+${bonus} pts)`;
+      }
+    }
+
     function gameLoop() {
       if (!isRunning) return;
 
-      // Update mouth animation angle
       mouthOpenAngle += mouthDirection;
       if (mouthOpenAngle >= maxMouthAngle || mouthOpenAngle <= minMouthAngle) {
         mouthDirection *= -1;
@@ -427,23 +468,29 @@
 
     function startGame() {
       if (animFrameId) cancelAnimationFrame(animFrameId);
+      if (ghostInterval) clearInterval(ghostInterval);
 
       if (!isRunning && score > 0 && currentMap.length > 0) {
         overlay.style.display = 'none';
         isRunning = true;
         animFrameId = requestAnimationFrame(gameLoop);
+        ghostInterval = setInterval(moveGhost, 500);
         return;
       }
 
       currentMap = JSON.parse(JSON.stringify(mapTemplate));
       pacman.col = 1; pacman.row = 1;
       pacman.dirCol = 1; pacman.dirRow = 0;
+      ghost.col = 5; ghost.row = 5;
       score = 0;
+      powerMode = false;
+      powerTimer = 0;
 
       overlay.style.display = 'none';
       isRunning = true;
 
       animFrameId = requestAnimationFrame(gameLoop);
+      ghostInterval = setInterval(moveGhost, 500);
     }
 
     function pauseGame() {
@@ -451,6 +498,7 @@
 
       isRunning = false;
       if (animFrameId) cancelAnimationFrame(animFrameId);
+      if (ghostInterval) clearInterval(ghostInterval);
 
       overlayTitle.innerText = "Game Paused";
       overlayMsg.innerText = `Current Score: ${score}`;
@@ -496,6 +544,12 @@
         }
       }
 
+      // Draw Ghost Emoji 👻 (or 🥶 when vulnerable/scared)
+      ctx.font = '18px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(powerMode ? '🥶' : '👻', ghost.col * tileSize + 15, ghost.row * tileSize + 15);
+
       // Draw Pac-Man with Mouth Rotation & Chomp Animation
       const pX = pacman.col * tileSize + 15;
       const pY = pacman.row * tileSize + 15;
@@ -529,6 +583,7 @@
     function endGame(win) {
       isRunning = false;
       if (animFrameId) cancelAnimationFrame(animFrameId);
+      if (ghostInterval) clearInterval(ghostInterval);
 
       const playerName = usernameInput.value.trim() || 'Guest';
 
