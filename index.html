@@ -220,7 +220,7 @@
 
   <header>
     <h1>ASL Pac-Man</h1>
-    <p>Collect ASL Hands & Strawberries 🍓 while dodging Misconceptions!</p>
+    <p>Collect ASL Hands ✋ & Strawberries 🍓 while dodging Misconceptions!</p>
   </header>
 
   <div id="game-container">
@@ -312,7 +312,8 @@
     let currentMap = [];
     let isRunning = false;
     let score = 0;
-    let isWixUser = false;
+    let mouthOpenAngle = 0.25; // Controls mouth opening
+    let mouthDirection = 1;
 
     // Local Storage Data Structures
     let totalWins = parseInt(localStorage.getItem('asl_total_wins')) || 0;
@@ -330,20 +331,16 @@
       "Fact: Eye contact is essential during ASL conversation!"
     ];
 
-    const pacman = { col: 1, row: 1, dirCol: 0, dirRow: 0 };
+    const pacman = { col: 1, row: 1, dirCol: 1, dirRow: 0 };
     const ghost = { col: 5, row: 5 };
 
-    // -------------------------------------------------------------
-    // WIX INTEGRATION LISTENER
-    // -------------------------------------------------------------
+    // Wix listener
     window.addEventListener('message', (event) => {
-      // Check if Wix sent logged-in user data
       if (event.data && event.data.type === 'SET_WIX_USER') {
         const wixName = event.data.username;
         if (wixName) {
           usernameInput.value = wixName;
-          usernameInput.disabled = true; // Lock input when auto-populated by Wix
-          isWixUser = true;
+          usernameInput.disabled = true;
         }
       }
     });
@@ -359,7 +356,6 @@
       const bestScore = leaderboard.length > 0 ? leaderboard[0].score : 0;
       statHigh.innerText = bestScore;
 
-      // Render Top 10 Leaderboard
       if (leaderboard.length === 0) {
         leaderboardList.innerHTML = '<li><span>No scores recorded yet.</span></li>';
       } else {
@@ -382,9 +378,7 @@
       };
 
       leaderboard.push(entry);
-      // Sort high-to-low by score
       leaderboard.sort((a, b) => b.score - a.score);
-      // Keep only top 10
       leaderboard = leaderboard.slice(0, 10);
 
       localStorage.setItem('asl_leaderboard_top10', JSON.stringify(leaderboard));
@@ -409,18 +403,16 @@
     function startGame() {
       if (gameInterval) clearInterval(gameInterval);
 
-      // Resume if mid-game
       if (!isRunning && score > 0 && currentMap.length > 0) {
         overlay.style.display = 'none';
         isRunning = true;
-        gameInterval = setInterval(gameStep, 250);
+        gameInterval = setInterval(gameStep, 200);
         return;
       }
 
-      // Reset for fresh game
       currentMap = JSON.parse(JSON.stringify(mapTemplate));
       pacman.col = 1; pacman.row = 1;
-      pacman.dirCol = 0; pacman.dirRow = 0;
+      pacman.dirCol = 1; pacman.dirRow = 0;
       ghost.col = 5; ghost.row = 5;
       score = 0;
       powerMode = false;
@@ -430,7 +422,7 @@
       isRunning = true;
 
       render();
-      gameInterval = setInterval(gameStep, 250);
+      gameInterval = setInterval(gameStep, 200);
     }
 
     function pauseGame() {
@@ -445,6 +437,12 @@
     }
 
     function gameStep() {
+      // Animate Pac-Man mouth
+      mouthOpenAngle += 0.08 * mouthDirection;
+      if (mouthOpenAngle >= 0.35 || mouthOpenAngle <= 0.05) {
+        mouthDirection *= -1;
+      }
+
       // Move Pac-Man
       let nextC = pacman.col + pacman.dirCol;
       let nextR = pacman.row + pacman.dirRow;
@@ -492,7 +490,7 @@
         }
       }
 
-      // Check Win Condition
+      // Win Condition Check
       let itemsRemaining = false;
       for (let r = 0; r < gridRows; r++) {
         for (let c = 0; c < gridCols; c++) {
@@ -522,11 +520,11 @@
             ctx.fillStyle = '#1e40af';
             ctx.fillRect(x + 1, y + 1, tileSize - 2, tileSize - 2);
           } else if (tile === 0) { // ASL Hand Icon
-            ctx.font = '14px sans-serif';
+            ctx.font = '15px sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText('✋', x + 15, y + 15);
-          } else if (tile === 2) { // Strawberry
+          } else if (tile === 2) { // Strawberry Power Pellet
             ctx.font = '16px sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
@@ -535,11 +533,27 @@
         }
       }
 
-      // Render Pac-Man
+      // Draw Pac-Man with Animated Open Mouth & Rotations
+      const pX = pacman.col * tileSize + 15;
+      const pY = pacman.row * tileSize + 15;
+      let rotationAngle = 0;
+
+      if (pacman.dirCol === 1) rotationAngle = 0;                // Right
+      else if (pacman.dirCol === -1) rotationAngle = Math.PI;     // Left
+      else if (pacman.dirRow === 1) rotationAngle = Math.PI / 2;  // Down
+      else if (pacman.dirRow === -1) rotationAngle = -Math.PI / 2;// Up
+
+      ctx.save();
+      ctx.translate(pX, pY);
+      ctx.rotate(rotationAngle);
+
       ctx.fillStyle = '#facc15';
       ctx.beginPath();
-      ctx.arc(pacman.col * tileSize + 15, pacman.row * tileSize + 15, 11, 0, Math.PI * 2);
+      ctx.arc(0, 0, 11, mouthOpenAngle * Math.PI, (2 - mouthOpenAngle) * Math.PI);
+      ctx.lineTo(0, 0);
       ctx.fill();
+
+      ctx.restore();
 
       // Render Ghost
       ctx.fillStyle = powerMode ? '#38bdf8' : '#ef4444';
@@ -547,7 +561,7 @@
       ctx.arc(ghost.col * tileSize + 15, ghost.row * tileSize + 15, 11, 0, Math.PI * 2);
       ctx.fill();
 
-      // Live Score Display
+      // Live Score
       ctx.fillStyle = '#ffffff';
       ctx.font = '12px sans-serif';
       ctx.textAlign = 'left';
@@ -562,7 +576,7 @@
       const playerName = usernameInput.value.trim() || 'Guest';
 
       if (win) {
-        score += 200; // Clear-board victory bonus
+        score += 200;
         totalWins += 1;
         localStorage.setItem('asl_total_wins', totalWins);
         saveScoreToLeaderboard(playerName, score, 'WIN');
@@ -582,7 +596,7 @@
       overlay.style.display = 'flex';
     }
 
-    // Initial load setup
+    // Initial setup
     currentMap = JSON.parse(JSON.stringify(mapTemplate));
     updateStatsUI();
     render();
