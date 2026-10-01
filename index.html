@@ -61,6 +61,32 @@
       box-sizing: border-box;
     }
 
+    .username-box {
+      margin: 10px 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      width: 100%;
+    }
+
+    .username-box label {
+      font-size: 0.85rem;
+      color: #cbd5e1;
+    }
+
+    .username-box input {
+      padding: 6px 10px;
+      border-radius: 4px;
+      border: 1px solid var(--card-border);
+      background-color: #0f172a;
+      color: var(--pacman-color);
+      font-weight: bold;
+      text-align: center;
+      width: 70%;
+      font-size: 0.9rem;
+    }
+
     /* Outer Stats Card & Log */
     .outer-dashboard {
       width: 330px;
@@ -75,16 +101,17 @@
       border: 1px solid var(--card-border);
       border-radius: 6px;
       padding: 10px 14px;
-      font-size: 0.9rem;
-      display: flex;
-      justify-content: space-between;
+      font-size: 0.85rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-gap: 6px;
     }
 
     .stats-card strong {
       color: var(--pacman-color);
     }
 
-    .history-card {
+    .leaderboard-card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       border-radius: 6px;
@@ -92,20 +119,32 @@
       font-size: 0.85rem;
     }
 
-    .history-card header {
+    .leaderboard-card header {
       text-align: left;
       font-weight: bold;
       color: var(--pacman-color);
       margin-bottom: 6px;
     }
 
-    .win-log {
-      max-height: 80px;
+    .leaderboard-list {
+      max-height: 120px;
       overflow-y: auto;
       margin: 0;
-      padding-left: 18px;
+      padding-left: 0;
+      list-style-type: none;
       font-size: 0.8rem;
       color: #cbd5e1;
+    }
+
+    .leaderboard-list li {
+      display: flex;
+      justify-content: space-between;
+      padding: 3px 0;
+      border-bottom: 1px solid #334155;
+    }
+
+    .leaderboard-list li:last-child {
+      border-bottom: none;
     }
 
     button.btn {
@@ -190,22 +229,31 @@
     <div id="overlay">
       <h2 id="overlay-title">ASL Pac-Man</h2>
       <p id="overlay-msg">Use Arrow keys / WASD or buttons to play!</p>
-      <button class="btn" onclick="startGame()">Start / Resume</button>
+
+      <!-- USERNAME PROMPT -->
+      <div class="username-box" id="username-container">
+        <label for="player-username">Player Name (Guest Mode):</label>
+        <input type="text" id="player-username" placeholder="Guest" maxlength="15" />
+      </div>
+
+      <button class="btn" onclick="startGame()">Start Game</button>
     </div>
   </div>
 
-  <!-- OUTSIDE DASHBOARD FOR STATS & WIN HISTORY LOG -->
+  <!-- OUTSIDE DASHBOARD FOR STATS & TOP 10 LEADERBOARD -->
   <div class="outer-dashboard">
     <div class="stats-card">
-      <div><strong>High Score:</strong> <span id="stat-high">0</span></div>
-      <div><strong>Total Wins:</strong> <span id="stat-wins">0</span></div>
+      <div><strong>Wins:</strong> <span id="stat-wins">0</span></div>
+      <div><strong>Losses:</strong> <span id="stat-losses">0</span></div>
+      <div><strong>Win Rate:</strong> <span id="stat-winrate">0%</span></div>
+      <div><strong>Best Score:</strong> <span id="stat-high">0</span></div>
     </div>
 
-    <div class="history-card">
-      <header>🏆 Saved Victories Log:</header>
-      <ul id="win-log-list" class="win-log">
-        <li>No board clears recorded yet.</li>
-      </ul>
+    <div class="leaderboard-card">
+      <header>🏆 Top 10 High Scores</header>
+      <ol id="leaderboard-list" class="leaderboard-list">
+        <li><span>No scores recorded yet.</span></li>
+      </ol>
     </div>
   </div>
 
@@ -233,17 +281,20 @@
     const overlayTitle = document.getElementById('overlay-title');
     const overlayMsg = document.getElementById('overlay-msg');
     const factDisplay = document.getElementById('fact-display');
+    const usernameInput = document.getElementById('player-username');
 
     // External UI references
-    const statHigh = document.getElementById('stat-high');
     const statWins = document.getElementById('stat-wins');
-    const winLogList = document.getElementById('win-log-list');
+    const statLosses = document.getElementById('stat-losses');
+    const statWinrate = document.getElementById('stat-winrate');
+    const statHigh = document.getElementById('stat-high');
+    const leaderboardList = document.getElementById('leaderboard-list');
 
     const tileSize = 30;
     const gridCols = 11;
     const gridRows = 11;
 
-    // 1 = Wall, 0 = ASL Hand Sign (✋), 2 = Strawberry Power Pellet (🍓), 3 = Empty
+    // Map Template
     const mapTemplate = [
       [1,1,1,1,1,1,1,1,1,1,1],
       [1,2,0,0,0,1,0,0,0,2,1],
@@ -261,11 +312,12 @@
     let currentMap = [];
     let isRunning = false;
     let score = 0;
+    let isWixUser = false;
 
-    // Saved Persistence Variables
-    let highScore = parseInt(localStorage.getItem('asl_high_score')) || 0;
+    // Local Storage Data Structures
     let totalWins = parseInt(localStorage.getItem('asl_total_wins')) || 0;
-    let winHistory = JSON.parse(localStorage.getItem('asl_win_history')) || [];
+    let totalLosses = parseInt(localStorage.getItem('asl_total_losses')) || 0;
+    let leaderboard = JSON.parse(localStorage.getItem('asl_leaderboard_top10')) || [];
 
     let powerMode = false;
     let powerTimer = 0;
@@ -281,19 +333,61 @@
     const pacman = { col: 1, row: 1, dirCol: 0, dirRow: 0 };
     const ghost = { col: 5, row: 5 };
 
-    function updateStatsUI() {
-      statHigh.innerText = highScore;
-      statWins.innerText = totalWins;
-
-      if (winHistory.length === 0) {
-        winLogList.innerHTML = '<li>No board clears recorded yet.</li>';
-      } else {
-        winLogList.innerHTML = winHistory
-          .slice(-5)
-          .reverse()
-          .map(item => `<li>Cleared board! Score: ${item.score} (${item.time})</li>`)
-          .join('');
+    // -------------------------------------------------------------
+    // WIX INTEGRATION LISTENER
+    // -------------------------------------------------------------
+    window.addEventListener('message', (event) => {
+      // Check if Wix sent logged-in user data
+      if (event.data && event.data.type === 'SET_WIX_USER') {
+        const wixName = event.data.username;
+        if (wixName) {
+          usernameInput.value = wixName;
+          usernameInput.disabled = true; // Lock input when auto-populated by Wix
+          isWixUser = true;
+        }
       }
+    });
+
+    function updateStatsUI() {
+      statWins.innerText = totalWins;
+      statLosses.innerText = totalLosses;
+
+      const totalGames = totalWins + totalLosses;
+      const winRatePercent = totalGames > 0 ? Math.round((totalWins / totalGames) * 100) : 0;
+      statWinrate.innerText = `${winRatePercent}%`;
+
+      const bestScore = leaderboard.length > 0 ? leaderboard[0].score : 0;
+      statHigh.innerText = bestScore;
+
+      // Render Top 10 Leaderboard
+      if (leaderboard.length === 0) {
+        leaderboardList.innerHTML = '<li><span>No scores recorded yet.</span></li>';
+      } else {
+        leaderboardList.innerHTML = leaderboard
+          .map((item, index) => `
+            <li>
+              <span><strong>#${index + 1}</strong> ${item.name}</span>
+              <span>${item.score} pts (${item.result})</span>
+            </li>
+          `).join('');
+      }
+    }
+
+    function saveScoreToLeaderboard(playerName, finalScore, resultStatus) {
+      const entry = {
+        name: playerName || 'Guest',
+        score: finalScore,
+        result: resultStatus,
+        date: new Date().toLocaleDateString()
+      };
+
+      leaderboard.push(entry);
+      // Sort high-to-low by score
+      leaderboard.sort((a, b) => b.score - a.score);
+      // Keep only top 10
+      leaderboard = leaderboard.slice(0, 10);
+
+      localStorage.setItem('asl_leaderboard_top10', JSON.stringify(leaderboard));
     }
 
     function setDirection(dc, dr) {
@@ -315,7 +409,7 @@
     function startGame() {
       if (gameInterval) clearInterval(gameInterval);
 
-      // Resume if paused
+      // Resume if mid-game
       if (!isRunning && score > 0 && currentMap.length > 0) {
         overlay.style.display = 'none';
         isRunning = true;
@@ -323,7 +417,7 @@
         return;
       }
 
-      // Reset for a fresh game
+      // Reset for fresh game
       currentMap = JSON.parse(JSON.stringify(mapTemplate));
       pacman.col = 1; pacman.row = 1;
       pacman.dirCol = 0; pacman.dirRow = 0;
@@ -365,19 +459,12 @@
       if (currentCell === 0) { // ASL Hand
         currentMap[pacman.row][pacman.col] = 3;
         score += 10;
-      } else if (currentCell === 2) { // Strawberry Power Pellet
+      } else if (currentCell === 2) { // Strawberry
         currentMap[pacman.row][pacman.col] = 3;
         score += 50;
         powerMode = true;
         powerTimer = 15;
         factDisplay.innerText = aslFacts[Math.floor(Math.random() * aslFacts.length)];
-      }
-
-      // Live High Score Update
-      if (score > highScore) {
-        highScore = score;
-        localStorage.setItem('asl_high_score', highScore);
-        updateStatsUI();
       }
 
       if (powerMode) {
@@ -438,8 +525,8 @@
             ctx.font = '14px sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText('🤟', x + 15, y + 15);
-          } else if (tile === 2) { // Strawberry Power Pellet
+            ctx.fillText('✋', x + 15, y + 15);
+          } else if (tile === 2) { // Strawberry
             ctx.font = '16px sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
@@ -460,46 +547,42 @@
       ctx.arc(ghost.col * tileSize + 15, ghost.row * tileSize + 15, 11, 0, Math.PI * 2);
       ctx.fill();
 
-      // Render Live Score Text on top of canvas
+      // Live Score Display
       ctx.fillStyle = '#ffffff';
       ctx.font = '12px sans-serif';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'alphabetic';
-      ctx.fillText(`Score: ${score}  |  High: ${highScore}`, 10, 15);
+      ctx.fillText(`Score: ${score}`, 10, 15);
     }
 
     function endGame(win) {
       isRunning = false;
       if (gameInterval) clearInterval(gameInterval);
 
+      const playerName = usernameInput.value.trim() || 'Guest';
+
       if (win) {
-        score += 200; // Clear board victory bonus
+        score += 200; // Clear-board victory bonus
         totalWins += 1;
-        if (score > highScore) highScore = score;
-
-        // Log win to history
-        winHistory.push({
-          score: score,
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        });
-
-        // Save into local memory
-        localStorage.setItem('asl_high_score', highScore);
         localStorage.setItem('asl_total_wins', totalWins);
-        localStorage.setItem('asl_win_history', JSON.stringify(winHistory));
+        saveScoreToLeaderboard(playerName, score, 'WIN');
 
         overlayTitle.innerText = "🏆 Victory!";
-        overlayMsg.innerText = `Board cleared! Earned +200 bonus!\nFinal Score: ${score}`;
+        overlayMsg.innerText = `Great job, ${playerName}!\nFinal Score: ${score}`;
       } else {
+        totalLosses += 1;
+        localStorage.setItem('asl_total_losses', totalLosses);
+        saveScoreToLeaderboard(playerName, score, 'LOSS');
+
         overlayTitle.innerText = "Game Over!";
-        overlayMsg.innerText = `Final Score: ${score}`;
+        overlayMsg.innerText = `Better luck next time, ${playerName}!\nFinal Score: ${score}`;
       }
 
       updateStatsUI();
       overlay.style.display = 'flex';
     }
 
-    // Initial Setup
+    // Initial load setup
     currentMap = JSON.parse(JSON.stringify(mapTemplate));
     updateStatsUI();
     render();
