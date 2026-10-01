@@ -326,7 +326,7 @@
       <h2 id="overlay-title">⏸️ Game Paused</h2>
       <p id="overlay-msg">Current Score: 0</p>
 
-      <button class="btn" onclick="startGame()">Resume / Play Again</button>
+      <button class="btn" id="overlay-btn" onclick="startGame()">Resume / Play Again</button>
       <div class="enter-hint">Press <strong>ENTER</strong> to continue</div>
     </div>
   </div>
@@ -371,6 +371,7 @@
     const overlay = document.getElementById('overlay');
     const overlayTitle = document.getElementById('overlay-title');
     const overlayMsg = document.getElementById('overlay-msg');
+    const overlayBtn = document.getElementById('overlay-btn');
     const factDisplay = document.getElementById('fact-display');
     const usernameInput = document.getElementById('player-username');
 
@@ -401,9 +402,18 @@
     let currentMap = [];
     let isRunning = false;
     let hasEntered = false;
+    let isGameOver = false;
     let score = 0;
     
-    // Mouth open/close animation parameters
+    // Power Mode (Strawberry Power-up)
+    let powerModeTimer = null;
+    let isPowerMode = false;
+
+    // Ghost Movement Speed Controller (Ghost moves every N frames for slower speed)
+    let frameCounter = 0;
+    const ghostMoveDelay = 22; // Higher number = slower ghost speed
+
+    // Mouth animation parameters
     let mouthOpenAngle = 0.2;
     let mouthDirection = 0.015;
     const minMouthAngle = 0.02;
@@ -423,6 +433,7 @@
     ];
 
     const pacman = { col: 1, row: 1, dirCol: 1, dirRow: 0 };
+    const ghost = { col: 5, row: 5, spawnCol: 5, spawnRow: 5 };
 
     window.addEventListener('message', (event) => {
       if (event.data && event.data.type === 'SET_WIX_USER') {
@@ -473,6 +484,15 @@
       localStorage.setItem('asl_leaderboard_top10', JSON.stringify(leaderboard));
     }
 
+    function activatePowerMode() {
+      isPowerMode = true;
+      if (powerModeTimer) clearTimeout(powerModeTimer);
+
+      powerModeTimer = setTimeout(() => {
+        isPowerMode = false;
+      }, 8000); // 8 seconds duration
+    }
+
     function movePacman(dc, dr) {
       if (!isRunning) return;
 
@@ -490,13 +510,62 @@
         if (currentCell === 0) { // ASL Hand
           currentMap[pacman.row][pacman.col] = 3;
           score += 10;
-        } else if (currentCell === 2) { // Strawberry
+        } else if (currentCell === 2) { // Strawberry (Power Mode)
           currentMap[pacman.row][pacman.col] = 3;
           score += 50;
+          activatePowerMode();
           factDisplay.innerText = aslFacts[Math.floor(Math.random() * aslFacts.length)];
         }
 
+        checkGhostCollision();
         checkWinCondition();
+      }
+    }
+
+    function moveGhostSlowly() {
+      const possibleMoves = [
+        { dc: 0, dr: -1 },
+        { dc: 0, dr: 1 },
+        { dc: -1, dr: 0 },
+        { dc: 1, dr: 0 }
+      ];
+
+      // Filter out walls
+      const validMoves = possibleMoves.filter(m => {
+        let nr = ghost.row + m.dr;
+        let nc = ghost.col + m.dc;
+        return currentMap[nr] && currentMap[nr][nc] !== 1;
+      });
+
+      if (validMoves.length === 0) return;
+
+      // Calculate best distance depending on chase or evade
+      validMoves.sort((a, b) => {
+        let distA = Math.hypot((ghost.col + a.dc) - pacman.col, (ghost.row + a.dr) - pacman.row);
+        let distB = Math.hypot((ghost.col + b.dc) - pacman.col, (ghost.row + b.dr) - pacman.row);
+
+        // Reverse pursuit when Pac-Man is in Power Mode
+        return isPowerMode ? distB - distA : distA - distB;
+      });
+
+      ghost.col += validMoves[0].dc;
+      ghost.row += validMoves[0].dr;
+
+      checkGhostCollision();
+    }
+
+    function checkGhostCollision() {
+      if (pacman.col === ghost.col && pacman.row === ghost.row) {
+        if (isPowerMode) {
+          // Eat Ghost for bonus points
+          score += 200;
+          ghost.col = ghost.spawnCol;
+          ghost.row = ghost.spawnRow;
+          factDisplay.innerText = "💥 You ate the Ghost! +200 Points!";
+        } else {
+          // Game Over condition
+          endGame(false);
+        }
       }
     }
 
@@ -529,9 +598,17 @@
     function gameLoop() {
       if (!isRunning) return;
 
+      // Update mouth animation
       mouthOpenAngle += mouthDirection;
       if (mouthOpenAngle >= maxMouthAngle || mouthOpenAngle <= minMouthAngle) {
         mouthDirection *= -1;
+      }
+
+      // Slow Ghost Movement Frame Clock
+      frameCounter++;
+      if (frameCounter >= ghostMoveDelay) {
+        moveGhostSlowly();
+        frameCounter = 0;
       }
 
       render();
@@ -541,17 +618,17 @@
     function startGame() {
       if (animFrameId) cancelAnimationFrame(animFrameId);
 
-      if (!isRunning && score > 0 && currentMap.length > 0) {
-        overlay.style.display = 'none';
-        isRunning = true;
-        animFrameId = requestAnimationFrame(gameLoop);
-        return;
+      // Reset map and state if restarting after game over or game clear
+      if (isGameOver || score === 0 || !isRunning) {
+        currentMap = JSON.parse(JSON.stringify(mapTemplate));
+        pacman.col = 1; pacman.row = 1;
+        pacman.dirCol = 1; pacman.dirRow = 0;
+        ghost.col = ghost.spawnCol; ghost.row = ghost.spawnRow;
+        score = 0;
+        isGameOver = false;
+        isPowerMode = false;
+        if (powerModeTimer) clearTimeout(powerModeTimer);
       }
-
-      currentMap = JSON.parse(JSON.stringify(mapTemplate));
-      pacman.col = 1; pacman.row = 1;
-      pacman.dirCol = 1; pacman.dirRow = 0;
-      score = 0;
 
       overlay.style.display = 'none';
       isRunning = true;
@@ -560,13 +637,14 @@
     }
 
     function pauseGame() {
-      if (!isRunning || !hasEntered) return;
+      if (!isRunning || !hasEntered || isGameOver) return;
 
       isRunning = false;
       if (animFrameId) cancelAnimationFrame(animFrameId);
 
       overlayTitle.innerText = "⏸️ Game Paused";
       overlayMsg.innerText = `Current Score: ${score}`;
+      overlayBtn.innerText = "Resume Game";
       overlay.style.display = 'flex';
     }
 
@@ -586,6 +664,7 @@
     function render() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+      // Render Map Tiles
       for (let r = 0; r < gridRows; r++) {
         for (let c = 0; c < gridCols; c++) {
           let tile = currentMap[r][c];
@@ -609,6 +688,14 @@
         }
       }
 
+      // Draw Ghost (Blue 🥶 when scared, 👻 normally)
+      const gX = ghost.col * tileSize + 15;
+      const gY = ghost.row * tileSize + 15;
+      ctx.font = '18px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(isPowerMode ? '🥶' : '👻', gX, gY);
+
       // Draw Pac-Man with Mouth Rotation & Chomp Animation
       const pX = pacman.col * tileSize + 15;
       const pY = pacman.row * tileSize + 15;
@@ -623,7 +710,7 @@
       ctx.translate(pX, pY);
       ctx.rotate(rotationAngle);
 
-      ctx.fillStyle = '#facc15';
+      ctx.fillStyle = isPowerMode ? '#38bdf8' : '#facc15';
       ctx.beginPath();
       ctx.arc(0, 0, 11, mouthOpenAngle * Math.PI, (2 - mouthOpenAngle) * Math.PI);
       ctx.lineTo(0, 0);
@@ -641,6 +728,7 @@
 
     function endGame(win) {
       isRunning = false;
+      isGameOver = true;
       if (animFrameId) cancelAnimationFrame(animFrameId);
 
       const playerName = usernameInput.value.trim() || 'Guest';
@@ -653,8 +741,16 @@
 
         overlayTitle.innerText = "🏆 Victory!";
         overlayMsg.innerText = `Great job, ${playerName}!\nFinal Score: ${score}`;
+      } else {
+        totalLosses += 1;
+        localStorage.setItem('asl_total_losses', totalLosses);
+        saveScoreToLeaderboard(playerName, score, 'LOSS');
+
+        overlayTitle.innerText = "💀 Game Over!";
+        overlayMsg.innerText = `The ghost caught you!\nFinal Score: ${score}`;
       }
 
+      overlayBtn.innerText = "Restart Game";
       updateStatsUI();
       overlay.style.display = 'flex';
     }
