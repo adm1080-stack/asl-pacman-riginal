@@ -33,6 +33,52 @@
       box-sizing: border-box;
     }
 
+    /* Fullscreen Welcome Overlay */
+    #welcome-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(15, 23, 42, 0.96);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      text-align: center;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    #welcome-screen h1 {
+      font-size: 2.8rem;
+      color: var(--pacman-color);
+      margin: 0 0 10px 0;
+      text-shadow: 0 0 15px rgba(250, 204, 21, 0.5);
+      letter-spacing: 2px;
+    }
+
+    #welcome-screen p {
+      font-size: 1.2rem;
+      color: #cbd5e1;
+      margin-bottom: 25px;
+    }
+
+    .welcome-card {
+      background: rgba(30, 41, 59, 0.9);
+      border: 1px solid var(--card-border);
+      padding: 30px;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+      max-width: 400px;
+      width: 90%;
+    }
+
     header {
       text-align: center;
       max-width: 500px;
@@ -62,7 +108,7 @@
       position: absolute;
       top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(15, 23, 42, 0.95);
-      display: flex;
+      display: none;
       flex-direction: column;
       justify-content: center;
       align-items: center;
@@ -73,7 +119,7 @@
     }
 
     .username-box {
-      margin: 15px 0 10px 0;
+      margin: 10px 0;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -82,7 +128,7 @@
     }
 
     .username-box label {
-      font-size: 0.85rem;
+      font-size: 0.9rem;
       color: #cbd5e1;
     }
 
@@ -94,8 +140,8 @@
       color: var(--pacman-color);
       font-weight: bold;
       text-align: center;
-      width: 75%;
-      font-size: 0.95rem;
+      width: 80%;
+      font-size: 1rem;
       outline: none;
     }
 
@@ -104,9 +150,9 @@
     }
 
     .enter-hint {
-      font-size: 0.75rem;
+      font-size: 0.85rem;
       color: #94a3b8;
-      margin-top: 8px;
+      margin-top: 10px;
     }
 
     .outer-dashboard {
@@ -176,13 +222,13 @@
       background-color: var(--pacman-color);
       color: #000;
       border: none;
-      padding: 10px 22px;
-      font-size: 1rem;
+      padding: 12px 24px;
+      font-size: 1.1rem;
       font-weight: bold;
       border-radius: 6px;
       cursor: pointer;
       margin-top: 5px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
       transition: transform 0.1s ease;
     }
 
@@ -251,6 +297,22 @@
 </head>
 <body>
 
+  <!-- BIG SCREEN WELCOME OVERLAY -->
+  <div id="welcome-screen">
+    <h1>WELCOME TO ASL PAC-MAN</h1>
+    <p>Deaf Culture Edition ✋🍓</p>
+
+    <div class="welcome-card">
+      <div class="username-box">
+        <label for="player-username">Enter Your Name:</label>
+        <input type="text" id="player-username" placeholder="Guest" maxlength="15" autofocus />
+      </div>
+
+      <button class="btn" onclick="enterGame()">ENTER GAME</button>
+      <div class="enter-hint">Press <strong>ENTER</strong> to play</div>
+    </div>
+  </div>
+
   <header>
     <h1>ASL Pac-Man</h1>
     <p>Collect ASL Hands ✋ & Strawberries 🍓 to finish the maze!</p>
@@ -259,17 +321,13 @@
   <div id="game-container">
     <canvas id="pacmanCanvas" width="330" height="330"></canvas>
     
+    <!-- IN-GAME PAUSE / RESULTS OVERLAY -->
     <div id="overlay">
-      <h2 id="overlay-title">🎮 Ready to Play?</h2>
-      <p id="overlay-msg">Collect all ASL Hands & Strawberries to win!</p>
+      <h2 id="overlay-title">⏸️ Game Paused</h2>
+      <p id="overlay-msg">Current Score: 0</p>
 
-      <div class="username-box" id="username-container">
-        <label for="player-username">Player Name:</label>
-        <input type="text" id="player-username" placeholder="Guest" maxlength="15" autofocus />
-      </div>
-
-      <button class="btn" onclick="startGame()">Start Game</button>
-      <div class="enter-hint">Press <strong>ENTER</strong> to start</div>
+      <button class="btn" onclick="startGame()">Resume / Play Again</button>
+      <div class="enter-hint">Press <strong>ENTER</strong> to continue</div>
     </div>
   </div>
 
@@ -309,6 +367,7 @@
   <script>
     const canvas = document.getElementById('pacmanCanvas');
     const ctx = canvas.getContext('2d');
+    const welcomeScreen = document.getElementById('welcome-screen');
     const overlay = document.getElementById('overlay');
     const overlayTitle = document.getElementById('overlay-title');
     const overlayMsg = document.getElementById('overlay-msg');
@@ -341,6 +400,7 @@
 
     let currentMap = [];
     let isRunning = false;
+    let hasEntered = false;
     let score = 0;
     
     // Mouth open/close animation parameters
@@ -440,10 +500,19 @@
       }
     }
 
-    // Keydown Listener for Controls & ENTER key to start
+    function enterGame() {
+      hasEntered = true;
+      welcomeScreen.style.display = 'none';
+      startGame();
+    }
+
+    // Keydown Listener for controls and ENTER key logic
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
-        if (!isRunning) {
+        if (!hasEntered) {
+          enterGame();
+          e.preventDefault();
+        } else if (!isRunning) {
           startGame();
           e.preventDefault();
         }
@@ -491,7 +560,7 @@
     }
 
     function pauseGame() {
-      if (!isRunning) return;
+      if (!isRunning || !hasEntered) return;
 
       isRunning = false;
       if (animFrameId) cancelAnimationFrame(animFrameId);
