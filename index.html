@@ -67,16 +67,17 @@
       justify-content: center;
       align-items: center;
       text-align: center;
-      padding: 15px;
+      padding: 20px;
       box-sizing: border-box;
+      border-radius: 5px;
     }
 
     .username-box {
-      margin: 10px 0;
+      margin: 15px 0 10px 0;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 5px;
+      gap: 6px;
       width: 100%;
     }
 
@@ -86,15 +87,26 @@
     }
 
     .username-box input {
-      padding: 6px 10px;
-      border-radius: 4px;
+      padding: 8px 12px;
+      border-radius: 6px;
       border: 1px solid var(--card-border);
       background-color: #0f172a;
       color: var(--pacman-color);
       font-weight: bold;
       text-align: center;
-      width: 70%;
-      font-size: 0.9rem;
+      width: 75%;
+      font-size: 0.95rem;
+      outline: none;
+    }
+
+    .username-box input:focus {
+      border-color: var(--pacman-color);
+    }
+
+    .enter-hint {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      margin-top: 8px;
     }
 
     .outer-dashboard {
@@ -164,13 +176,18 @@
       background-color: var(--pacman-color);
       color: #000;
       border: none;
-      padding: 10px 20px;
+      padding: 10px 22px;
       font-size: 1rem;
       font-weight: bold;
-      border-radius: 5px;
+      border-radius: 6px;
       cursor: pointer;
-      margin-top: 10px;
+      margin-top: 5px;
       box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+      transition: transform 0.1s ease;
+    }
+
+    button.btn:active {
+      transform: scale(0.96);
     }
 
     button.pause-btn {
@@ -236,22 +253,23 @@
 
   <header>
     <h1>ASL Pac-Man</h1>
-    <p>Avoid 👻! Eat 🍓 to turn the tables and catch the ghost!</p>
+    <p>Collect ASL Hands ✋ & Strawberries 🍓 to finish the maze!</p>
   </header>
 
   <div id="game-container">
     <canvas id="pacmanCanvas" width="330" height="330"></canvas>
     
     <div id="overlay">
-      <h2 id="overlay-title">ASL Pac-Man</h2>
-      <p id="overlay-msg">Avoid Ghost 👻! Eat Strawberry 🍓 for Power Mode!</p>
+      <h2 id="overlay-title">🎮 Ready to Play?</h2>
+      <p id="overlay-msg">Collect all ASL Hands & Strawberries to win!</p>
 
       <div class="username-box" id="username-container">
-        <label for="player-username">Player Name (Guest Mode):</label>
-        <input type="text" id="player-username" placeholder="Guest" maxlength="15" />
+        <label for="player-username">Player Name:</label>
+        <input type="text" id="player-username" placeholder="Guest" maxlength="15" autofocus />
       </div>
 
       <button class="btn" onclick="startGame()">Start Game</button>
+      <div class="enter-hint">Press <strong>ENTER</strong> to start</div>
     </div>
   </div>
 
@@ -332,10 +350,6 @@
     const maxMouthAngle = 0.35;
 
     let animFrameId = null;
-    let ghostInterval = null;
-
-    let powerMode = false;
-    let powerTimer = 0;
 
     let totalWins = parseInt(localStorage.getItem('asl_total_wins')) || 0;
     let totalLosses = parseInt(localStorage.getItem('asl_total_losses')) || 0;
@@ -349,7 +363,6 @@
     ];
 
     const pacman = { col: 1, row: 1, dirCol: 1, dirRow: 0 };
-    const ghost = { col: 5, row: 5 };
 
     window.addEventListener('message', (event) => {
       if (event.data && event.data.type === 'SET_WIX_USER') {
@@ -417,68 +430,32 @@
         if (currentCell === 0) { // ASL Hand
           currentMap[pacman.row][pacman.col] = 3;
           score += 10;
-        } else if (currentCell === 2) { // Strawberry Power Pellet
+        } else if (currentCell === 2) { // Strawberry
           currentMap[pacman.row][pacman.col] = 3;
           score += 50;
-          powerMode = true;
-          powerTimer = 25;
-          factDisplay.innerText = "POWER MODE! 🍓 Eat the ghost 🥶!";
+          factDisplay.innerText = aslFacts[Math.floor(Math.random() * aslFacts.length)];
         }
 
-        checkCollision();
         checkWinCondition();
       }
     }
 
+    // Keydown Listener for Controls & ENTER key to start
     window.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        if (!isRunning) {
+          startGame();
+          e.preventDefault();
+        }
+        return;
+      }
+
       if (!isRunning) return;
       if (e.key === 'ArrowUp' || e.key === 'w') { movePacman(0, -1); e.preventDefault(); }
       if (e.key === 'ArrowDown' || e.key === 's') { movePacman(0, 1); e.preventDefault(); }
       if (e.key === 'ArrowLeft' || e.key === 'a') { movePacman(-1, 0); e.preventDefault(); }
       if (e.key === 'ArrowRight' || e.key === 'd') { movePacman(1, 0); e.preventDefault(); }
     });
-
-    function moveGhost() {
-      if (!isRunning) return;
-
-      if (powerMode) {
-        powerTimer--;
-        if (powerTimer <= 0) {
-          powerMode = false;
-          factDisplay.innerText = "Power Mode expired! Watch out for 👻!";
-        }
-      }
-
-      const dirs = [{c: 0, r: -1}, {c: 0, r: 1}, {c: -1, r: 0}, {c: 1, r: 0}];
-      let validMoves = dirs.filter(d => currentMap[ghost.row + d.r][ghost.col + d.c] !== 1);
-
-      if (validMoves.length > 0) {
-        validMoves.sort((a, b) => {
-          let distA = Math.hypot((ghost.col + a.c) - pacman.col, (ghost.row + a.r) - pacman.row);
-          let distB = Math.hypot((ghost.col + b.c) - pacman.col, (ghost.row + b.r) - pacman.row);
-          return powerMode ? distB - distA : distA - distB;
-        });
-
-        let chosen = (Math.random() < 0.8) ? validMoves[0] : validMoves[Math.floor(Math.random() * validMoves.length)];
-        ghost.col += chosen.c;
-        ghost.row += chosen.r;
-      }
-
-      checkCollision();
-    }
-
-    function checkCollision() {
-      if (pacman.col === ghost.col && pacman.row === ghost.row) {
-        if (powerMode) {
-          score += 200;
-          ghost.col = 5;
-          ghost.row = 5;
-          factDisplay.innerText = "Ate Ghost! 👻 (+200 pts)";
-        } else {
-          endGame(false);
-        }
-      }
-    }
 
     function gameLoop() {
       if (!isRunning) return;
@@ -494,29 +471,23 @@
 
     function startGame() {
       if (animFrameId) cancelAnimationFrame(animFrameId);
-      if (ghostInterval) clearInterval(ghostInterval);
 
       if (!isRunning && score > 0 && currentMap.length > 0) {
         overlay.style.display = 'none';
         isRunning = true;
         animFrameId = requestAnimationFrame(gameLoop);
-        ghostInterval = setInterval(moveGhost, 450);
         return;
       }
 
       currentMap = JSON.parse(JSON.stringify(mapTemplate));
       pacman.col = 1; pacman.row = 1;
       pacman.dirCol = 1; pacman.dirRow = 0;
-      ghost.col = 5; ghost.row = 5;
       score = 0;
-      powerMode = false;
-      powerTimer = 0;
 
       overlay.style.display = 'none';
       isRunning = true;
 
       animFrameId = requestAnimationFrame(gameLoop);
-      ghostInterval = setInterval(moveGhost, 450);
     }
 
     function pauseGame() {
@@ -524,9 +495,8 @@
 
       isRunning = false;
       if (animFrameId) cancelAnimationFrame(animFrameId);
-      if (ghostInterval) clearInterval(ghostInterval);
 
-      overlayTitle.innerText = "Game Paused";
+      overlayTitle.innerText = "⏸️ Game Paused";
       overlayMsg.innerText = `Current Score: ${score}`;
       overlay.style.display = 'flex';
     }
@@ -560,8 +530,8 @@
             ctx.font = '15px sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText('🤟', x + 15, y + 15);
-          } else if (tile === 2) { // Strawberry Power Pellet
+            ctx.fillText('✋', x + 15, y + 15);
+          } else if (tile === 2) { // Strawberry
             ctx.font = '16px sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
@@ -569,12 +539,6 @@
           }
         }
       }
-
-      // Draw Ghost (👻 standard, 🥶 scared)
-      ctx.font = '18px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(powerMode ? '🥶' : '👻', ghost.col * tileSize + 15, ghost.row * tileSize + 15);
 
       // Draw Pac-Man with Mouth Rotation & Chomp Animation
       const pX = pacman.col * tileSize + 15;
@@ -609,7 +573,6 @@
     function endGame(win) {
       isRunning = false;
       if (animFrameId) cancelAnimationFrame(animFrameId);
-      if (ghostInterval) clearInterval(ghostInterval);
 
       const playerName = usernameInput.value.trim() || 'Guest';
 
@@ -621,13 +584,6 @@
 
         overlayTitle.innerText = "🏆 Victory!";
         overlayMsg.innerText = `Great job, ${playerName}!\nFinal Score: ${score}`;
-      } else {
-        totalLosses += 1;
-        localStorage.setItem('asl_total_losses', totalLosses);
-        saveScoreToLeaderboard(playerName, score, 'LOSS');
-
-        overlayTitle.innerText = "👻 Game Over!";
-        overlayMsg.innerText = `Ghost caught you, ${playerName}!\nFinal Score: ${score}`;
       }
 
       updateStatsUI();
