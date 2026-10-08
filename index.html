@@ -6,20 +6,23 @@
   <title>ASL Pac-Man - Deaf Culture Edition</title>
   <style>
     :root {
-      --bg-color: #000000; /* Pure black background outside */
-      --maze-wall: #38bdf8; /* Soft blue maze borders */
-      --pacman-color: #facc15; /* Classic yellow */
-      --text-color: #ffffff;
+      --bg-color: #0f172a;
+      --maze-wall: #1e40af;
+      --pacman-color: #facc15;
+      --text-color: #f8fafc;
       --quit-color: #ef4444;
-      --card-bg: rgba(20, 25, 45, 0.85); /* Dark contrast glass for cards */
+      --card-bg: rgba(30, 41, 59, 0.85);
       --card-border: rgba(255, 255, 255, 0.2);
     }
 
     body {
       margin: 0;
-      padding: 0;
-      background-color: #000000; /* Pure black outer background */
-      background-image: none; /* Removed background image */
+      padding: 15px;
+      background-image: url('image_b01065.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
       color: var(--text-color);
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       display: flex;
@@ -27,7 +30,6 @@
       align-items: center;
       user-select: none;
       min-height: 100vh;
-      width: 100vw;
       box-sizing: border-box;
     }
 
@@ -38,8 +40,7 @@
       left: 0;
       width: 100vw;
       height: 100vh;
-      background: rgba(0, 0, 0, 0.95);
-      backdrop-filter: blur(8px);
+      background: rgba(15, 23, 42, 0.96);
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -81,12 +82,11 @@
     header {
       text-align: center;
       max-width: 500px;
-      margin: 15px 0 10px 0;
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
+      margin-bottom: 10px;
+      background: rgba(15, 23, 42, 0.7);
       padding: 10px 18px;
       border-radius: 8px;
-      backdrop-filter: blur(8px);
+      backdrop-filter: blur(5px);
     }
 
     h1 { color: var(--pacman-color); margin: 0 0 5px 0; text-shadow: 1px 1px 3px rgba(0,0,0,0.8); }
@@ -96,18 +96,18 @@
       position: relative;
       width: 330px;
       height: 330px;
-      background-color: #000000;
+      background-color: rgba(0, 0, 0, 0.9);
       border: 3px solid var(--maze-wall);
       border-radius: 8px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.8);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
     }
 
-    canvas { display: block; background-color: #000000; }
+    canvas { display: block; }
 
     #overlay {
       position: absolute;
       top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.95);
+      background: rgba(15, 23, 42, 0.95);
       display: none;
       flex-direction: column;
       justify-content: center;
@@ -119,7 +119,7 @@
     }
 
     .username-box {
-      margin: 5px 0;
+      margin: 10px 0;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -152,7 +152,7 @@
     .enter-hint {
       font-size: 0.85rem;
       color: #94a3b8;
-      margin-top: 8px;
+      margin-top: 10px;
     }
 
     .outer-dashboard {
@@ -163,23 +163,29 @@
       gap: 10px;
     }
 
-    .stats-card, .leaderboard-card {
+    .stats-card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       border-radius: 6px;
       padding: 10px 14px;
       font-size: 0.85rem;
-      backdrop-filter: blur(8px);
-    }
-
-    .stats-card {
       display: grid;
       grid-template-columns: 1fr 1fr;
       grid-gap: 6px;
+      backdrop-filter: blur(6px);
     }
 
     .stats-card strong {
       color: var(--pacman-color);
+    }
+
+    .leaderboard-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      padding: 10px 14px;
+      font-size: 0.85rem;
+      backdrop-filter: blur(6px);
     }
 
     .leaderboard-card header {
@@ -189,11 +195,10 @@
       margin-bottom: 6px;
       background: none;
       padding: 0;
-      border: none;
     }
 
     .leaderboard-list {
-      max-height: 100px;
+      max-height: 120px;
       overflow-y: auto;
       margin: 0;
       padding-left: 0;
@@ -214,8 +219,8 @@
     }
 
     button.btn {
-      background-color: var(--quit-color);
-      color: #ffffff;
+      background-color: var(--pacman-color);
+      color: #000;
       border: none;
       padding: 12px 24px;
       font-size: 1.1rem;
@@ -251,7 +256,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      backdrop-filter: blur(8px);
+      backdrop-filter: blur(6px);
     }
 
     .controls {
@@ -265,4 +270,494 @@
     .ctrl-btn {
       width: 50px;
       height: 50px;
-      background-color: rgba(30, 41, 59, 0.85);
+      background-color: rgba(51, 65, 85, 0.85);
+      color: var(--text-color);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 6px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(4px);
+    }
+
+    .ctrl-btn:active {
+      background-color: var(--pacman-color);
+      color: #000;
+    }
+
+    .action-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- BIG SCREEN WELCOME OVERLAY -->
+  <div id="welcome-screen">
+    <h1>WELCOME TO ASL PAC-MAN</h1>
+    <p>Deaf Culture Edition ✋🍓</p>
+
+    <div class="welcome-card">
+      <div class="username-box">
+        <label for="player-username">Enter Your Name:</label>
+        <input type="text" id="player-username" placeholder="Guest" maxlength="15" autofocus />
+      </div>
+
+      <button class="btn" onclick="enterGame()">ENTER GAME</button>
+      <div class="enter-hint">Press <strong>ENTER</strong> to play</div>
+    </div>
+  </div>
+
+  <header>
+    <h1>ASL Pac-Man</h1>
+    <p>Collect ASL Hands ✋ & Strawberries 🍓 to finish the maze!</p>
+  </header>
+
+  <div id="game-container">
+    <canvas id="pacmanCanvas" width="330" height="330"></canvas>
+    
+    <!-- IN-GAME PAUSE / RESULTS OVERLAY -->
+    <div id="overlay">
+      <h2 id="overlay-title">⏸️ Game Paused</h2>
+      <p id="overlay-msg">Current Score: 0</p>
+
+      <button class="btn" id="overlay-btn" onclick="startGame()">Resume / Play Again</button>
+      <div class="enter-hint">Press <strong>ENTER</strong> to continue</div>
+    </div>
+  </div>
+
+  <div class="outer-dashboard">
+    <div class="stats-card">
+      <div><strong>Wins:</strong> <span id="stat-wins">0</span></div>
+      <div><strong>Losses:</strong> <span id="stat-losses">0</span></div>
+      <div><strong>Win Rate:</strong> <span id="stat-winrate">0%</span></div>
+      <div><strong>Best Score:</strong> <span id="stat-high">0</span></div>
+    </div>
+
+    <div class="leaderboard-card">
+      <header>🏆 Top 10 High Scores</header>
+      <ol id="leaderboard-list" class="leaderboard-list">
+        <li><span>No scores recorded yet.</span></li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="fact-banner" id="fact-display">
+    Collect all ASL Hands ✋ & Strawberries 🍓 to win!
+  </div>
+
+  <div class="controls">
+    <div></div>
+    <button class="ctrl-btn" onclick="movePacman(0, -1)">▲</button>
+    <div></div>
+    <button class="ctrl-btn" onclick="movePacman(-1, 0)">◀</button>
+    <button class="ctrl-btn" onclick="movePacman(0, 1)">▼</button>
+    <button class="ctrl-btn" onclick="movePacman(1, 0)">▶</button>
+  </div>
+
+  <div class="action-row">
+    <button class="btn pause-btn" onclick="pauseGame()">Pause / Menu</button>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('pacmanCanvas');
+    const ctx = canvas.getContext('2d');
+    const welcomeScreen = document.getElementById('welcome-screen');
+    const overlay = document.getElementById('overlay');
+    const overlayTitle = document.getElementById('overlay-title');
+    const overlayMsg = document.getElementById('overlay-msg');
+    const overlayBtn = document.getElementById('overlay-btn');
+    const factDisplay = document.getElementById('fact-display');
+    const usernameInput = document.getElementById('player-username');
+
+    const statWins = document.getElementById('stat-wins');
+    const statLosses = document.getElementById('stat-losses');
+    const statWinrate = document.getElementById('stat-winrate');
+    const statHigh = document.getElementById('stat-high');
+    const leaderboardList = document.getElementById('leaderboard-list');
+
+    const tileSize = 30;
+    const gridCols = 11;
+    const gridRows = 11;
+
+    const mapTemplate = [
+      [1,1,1,1,1,1,1,1,1,1,1],
+      [1,2,0,0,0,1,0,0,0,2,1],
+      [1,0,1,1,0,1,0,1,1,0,1],
+      [1,0,1,0,0,0,0,0,1,0,1],
+      [1,0,0,0,1,3,1,0,0,0,1],
+      [1,1,1,0,3,3,3,0,1,1,1],
+      [1,0,0,0,1,3,1,0,0,0,1],
+      [1,0,1,0,0,0,0,0,1,0,1],
+      [1,0,1,1,0,1,0,1,1,0,1],
+      [1,2,0,0,0,1,0,0,0,2,1],
+      [1,1,1,1,1,1,1,1,1,1,1]
+    ];
+
+    let currentMap = [];
+    let isRunning = false;
+    let hasEntered = false;
+    let isGameOver = false;
+    let score = 0;
+    
+    // Power Mode (Strawberry Power-up)
+    let powerModeTimer = null;
+    let isPowerMode = false;
+
+    // Ghost Movement Speed Controller (Ghost moves every N frames for slower speed)
+    let frameCounter = 0;
+    const ghostMoveDelay = 22; // Higher number = slower ghost speed
+
+    // Mouth animation parameters
+    let mouthOpenAngle = 0.2;
+    let mouthDirection = 0.015;
+    const minMouthAngle = 0.02;
+    const maxMouthAngle = 0.35;
+
+    let animFrameId = null;
+
+    let totalWins = parseInt(localStorage.getItem('asl_total_wins')) || 0;
+    let totalLosses = parseInt(localStorage.getItem('asl_total_losses')) || 0;
+    let leaderboard = JSON.parse(localStorage.getItem('asl_leaderboard_top10')) || [];
+
+    const aslFacts = [
+      "Fact: ASL has its own grammar and sentence structure!",
+      "Fact: Gently tap a shoulder or wave to get attention.",
+      "Fact: Facial expressions show questions and grammar in ASL.",
+      "Fact: Eye contact is essential during ASL conversation!"
+    ];
+
+    const pacman = { col: 1, row: 1, dirCol: 1, dirRow: 0 };
+    const ghost = { col: 5, row: 5, spawnCol: 5, spawnRow: 5 };
+
+    window.addEventListener('message', (event) => {
+      if (event.data && event.data.type === 'SET_WIX_USER') {
+        const wixName = event.data.username;
+        if (wixName) {
+          usernameInput.value = wixName;
+          usernameInput.disabled = true;
+        }
+      }
+    });
+
+    function updateStatsUI() {
+      statWins.innerText = totalWins;
+      statLosses.innerText = totalLosses;
+
+      const totalGames = totalWins + totalLosses;
+      const winRatePercent = totalGames > 0 ? Math.round((totalWins / totalGames) * 100) : 0;
+      statWinrate.innerText = `${winRatePercent}%`;
+
+      const bestScore = leaderboard.length > 0 ? leaderboard[0].score : 0;
+      statHigh.innerText = bestScore;
+
+      if (leaderboard.length === 0) {
+        leaderboardList.innerHTML = '<li><span>No scores recorded yet.</span></li>';
+      } else {
+        leaderboardList.innerHTML = leaderboard
+          .map((item, index) => `
+            <li>
+              <span><strong>#${index + 1}</strong> ${item.name}</span>
+              <span>${item.score} pts (${item.result})</span>
+            </li>
+          `).join('');
+      }
+    }
+
+    function saveScoreToLeaderboard(playerName, finalScore, resultStatus) {
+      const entry = {
+        name: playerName || 'Guest',
+        score: finalScore,
+        result: resultStatus,
+        date: new Date().toLocaleDateString()
+      };
+
+      leaderboard.push(entry);
+      leaderboard.sort((a, b) => b.score - a.score);
+      leaderboard = leaderboard.slice(0, 10);
+
+      localStorage.setItem('asl_leaderboard_top10', JSON.stringify(leaderboard));
+    }
+
+    function activatePowerMode() {
+      isPowerMode = true;
+      if (powerModeTimer) clearTimeout(powerModeTimer);
+
+      powerModeTimer = setTimeout(() => {
+        isPowerMode = false;
+      }, 8000); // 8 seconds duration
+    }
+
+    function movePacman(dc, dr) {
+      if (!isRunning) return;
+
+      let nextC = pacman.col + dc;
+      let nextR = pacman.row + dr;
+
+      pacman.dirCol = dc;
+      pacman.dirRow = dr;
+
+      if (currentMap[nextR][nextC] !== 1) {
+        pacman.col = nextC;
+        pacman.row = nextR;
+
+        let currentCell = currentMap[pacman.row][pacman.col];
+        if (currentCell === 0) { // ASL Hand
+          currentMap[pacman.row][pacman.col] = 3;
+          score += 10;
+        } else if (currentCell === 2) { // Strawberry (Power Mode)
+          currentMap[pacman.row][pacman.col] = 3;
+          score += 50;
+          activatePowerMode();
+          factDisplay.innerText = aslFacts[Math.floor(Math.random() * aslFacts.length)];
+        }
+
+        checkGhostCollision();
+        checkWinCondition();
+      }
+    }
+
+    function moveGhostSlowly() {
+      const possibleMoves = [
+        { dc: 0, dr: -1 },
+        { dc: 0, dr: 1 },
+        { dc: -1, dr: 0 },
+        { dc: 1, dr: 0 }
+      ];
+
+      // Filter out walls
+      const validMoves = possibleMoves.filter(m => {
+        let nr = ghost.row + m.dr;
+        let nc = ghost.col + m.dc;
+        return currentMap[nr] && currentMap[nr][nc] !== 1;
+      });
+
+      if (validMoves.length === 0) return;
+
+      // Calculate best distance depending on chase or evade
+      validMoves.sort((a, b) => {
+        let distA = Math.hypot((ghost.col + a.dc) - pacman.col, (ghost.row + a.dr) - pacman.row);
+        let distB = Math.hypot((ghost.col + b.dc) - pacman.col, (ghost.row + b.dr) - pacman.row);
+
+        // Reverse pursuit when Pac-Man is in Power Mode
+        return isPowerMode ? distB - distA : distA - distB;
+      });
+
+      ghost.col += validMoves[0].dc;
+      ghost.row += validMoves[0].dr;
+
+      checkGhostCollision();
+    }
+
+    function checkGhostCollision() {
+      if (pacman.col === ghost.col && pacman.row === ghost.row) {
+        if (isPowerMode) {
+          // Eat Ghost for bonus points
+          score += 200;
+          ghost.col = ghost.spawnCol;
+          ghost.row = ghost.spawnRow;
+          factDisplay.innerText = "💥 You ate the Ghost! +200 Points!";
+        } else {
+          // Game Over condition
+          endGame(false);
+        }
+      }
+    }
+
+    function enterGame() {
+      hasEntered = true;
+      welcomeScreen.style.display = 'none';
+      startGame();
+    }
+
+    // Keydown Listener for controls and ENTER key logic
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        if (!hasEntered) {
+          enterGame();
+          e.preventDefault();
+        } else if (!isRunning) {
+          startGame();
+          e.preventDefault();
+        }
+        return;
+      }
+
+      if (!isRunning) return;
+      if (e.key === 'ArrowUp' || e.key === 'w') { movePacman(0, -1); e.preventDefault(); }
+      if (e.key === 'ArrowDown' || e.key === 's') { movePacman(0, 1); e.preventDefault(); }
+      if (e.key === 'ArrowLeft' || e.key === 'a') { movePacman(-1, 0); e.preventDefault(); }
+      if (e.key === 'ArrowRight' || e.key === 'd') { movePacman(1, 0); e.preventDefault(); }
+    });
+
+    function gameLoop() {
+      if (!isRunning) return;
+
+      // Update mouth animation
+      mouthOpenAngle += mouthDirection;
+      if (mouthOpenAngle >= maxMouthAngle || mouthOpenAngle <= minMouthAngle) {
+        mouthDirection *= -1;
+      }
+
+      // Slow Ghost Movement Frame Clock
+      frameCounter++;
+      if (frameCounter >= ghostMoveDelay) {
+        moveGhostSlowly();
+        frameCounter = 0;
+      }
+
+      render();
+      animFrameId = requestAnimationFrame(gameLoop);
+    }
+
+    function startGame() {
+      if (animFrameId) cancelAnimationFrame(animFrameId);
+
+      // Reset map and state if restarting after game over or game clear
+      if (isGameOver || score === 0 || !isRunning) {
+        currentMap = JSON.parse(JSON.stringify(mapTemplate));
+        pacman.col = 1; pacman.row = 1;
+        pacman.dirCol = 1; pacman.dirRow = 0;
+        ghost.col = ghost.spawnCol; ghost.row = ghost.spawnRow;
+        score = 0;
+        isGameOver = false;
+        isPowerMode = false;
+        if (powerModeTimer) clearTimeout(powerModeTimer);
+      }
+
+      overlay.style.display = 'none';
+      isRunning = true;
+
+      animFrameId = requestAnimationFrame(gameLoop);
+    }
+
+    function pauseGame() {
+      if (!isRunning || !hasEntered || isGameOver) return;
+
+      isRunning = false;
+      if (animFrameId) cancelAnimationFrame(animFrameId);
+
+      overlayTitle.innerText = "⏸️ Game Paused";
+      overlayMsg.innerText = `Current Score: ${score}`;
+      overlayBtn.innerText = "Resume Game";
+      overlay.style.display = 'flex';
+    }
+
+    function checkWinCondition() {
+      let itemsRemaining = false;
+      for (let r = 0; r < gridRows; r++) {
+        for (let c = 0; c < gridCols; c++) {
+          if (currentMap[r][c] === 0 || currentMap[r][c] === 2) itemsRemaining = true;
+        }
+      }
+      
+      if (!itemsRemaining) {
+        endGame(true);
+      }
+    }
+
+    function render() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Render Map Tiles
+      for (let r = 0; r < gridRows; r++) {
+        for (let c = 0; c < gridCols; c++) {
+          let tile = currentMap[r][c];
+          let x = c * tileSize;
+          let y = r * tileSize;
+
+          if (tile === 1) { // Wall
+            ctx.fillStyle = '#1e40af';
+            ctx.fillRect(x + 1, y + 1, tileSize - 2, tileSize - 2);
+          } else if (tile === 0) { // ASL Hand
+            ctx.font = '15px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('✋', x + 15, y + 15);
+          } else if (tile === 2) { // Strawberry
+            ctx.font = '16px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('🍓', x + 15, y + 15);
+          }
+        }
+      }
+
+      // Draw Ghost (Blue 🥶 when scared, 👻 normally)
+      const gX = ghost.col * tileSize + 15;
+      const gY = ghost.row * tileSize + 15;
+      ctx.font = '18px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(isPowerMode ? '🥶' : '👻', gX, gY);
+
+      // Draw Pac-Man with Mouth Rotation & Chomp Animation
+      const pX = pacman.col * tileSize + 15;
+      const pY = pacman.row * tileSize + 15;
+      let rotationAngle = 0;
+
+      if (pacman.dirCol === 1) rotationAngle = 0;
+      else if (pacman.dirCol === -1) rotationAngle = Math.PI;
+      else if (pacman.dirRow === 1) rotationAngle = Math.PI / 2;
+      else if (pacman.dirRow === -1) rotationAngle = -Math.PI / 2;
+
+      ctx.save();
+      ctx.translate(pX, pY);
+      ctx.rotate(rotationAngle);
+
+      ctx.fillStyle = isPowerMode ? '#38bdf8' : '#facc15';
+      ctx.beginPath();
+      ctx.arc(0, 0, 11, mouthOpenAngle * Math.PI, (2 - mouthOpenAngle) * Math.PI);
+      ctx.lineTo(0, 0);
+      ctx.fill();
+
+      ctx.restore();
+
+      // Live Score
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '12px sans-serif';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillText(`Score: ${score}`, 10, 15);
+    }
+
+    function endGame(win) {
+      isRunning = false;
+      isGameOver = true;
+      if (animFrameId) cancelAnimationFrame(animFrameId);
+
+      const playerName = usernameInput.value.trim() || 'Guest';
+
+      if (win) {
+        score += 300;
+        totalWins += 1;
+        localStorage.setItem('asl_total_wins', totalWins);
+        saveScoreToLeaderboard(playerName, score, 'WIN');
+
+        overlayTitle.innerText = "🏆 Victory!";
+        overlayMsg.innerText = `Great job, ${playerName}!\nFinal Score: ${score}`;
+      } else {
+        totalLosses += 1;
+        localStorage.setItem('asl_total_losses', totalLosses);
+        saveScoreToLeaderboard(playerName, score, 'LOSS');
+
+        overlayTitle.innerText = "💀 Game Over!";
+        overlayMsg.innerText = `The ghost caught you!\nFinal Score: ${score}`;
+      }
+
+      overlayBtn.innerText = "Restart Game";
+      updateStatsUI();
+      overlay.style.display = 'flex';
+    }
+
+    currentMap = JSON.parse(JSON.stringify(mapTemplate));
+    updateStatsUI();
+    render();
+  </script>
+</body>
+</html>
