@@ -184,4 +184,89 @@
     .leaderboard-card header {
       text-align: left;
       font-weight: bold;
-      color: var(--pac
+      color: var(--pacman-color);
+      margin-bottom: 6px;
+      background: none;
+      padding: 0;
+      border: none;
+    }
+
+    .leaderboard-list {
+      max-height: 100px;
+      overflow-y: auto;
+      margin: 0;
+      padding-left: 0;
+      list-style-type: none;
+      font-size: 0.8rem;
+      color: #cbd5e1;
+    }
+
+    .leaderboard-list li {
+      display: flex;
+      justify-content: space-between;
+      padding: 3px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .leaderboard-list li:last-child {
+      border-bottom: none;
+    }
+
+    button.btn {
+      background-color: var(--quit-color);
+      color: #ffffff;
+      border: none;
+      padding: 12px 24px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 5px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      transition: transform 0.1s ease;
+    }
+
+    button.btn:active {
+      transform: scale(0.96);
+    }
+
+    button.pause-btn {
+      background-color: var(--quit-color);
+      color: #fff;
+    }
+
+    .fact-banner {
+      width: 330px;
+      min-height: 44px;
+      margin-top: 10px;
+      background-color: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      padding: 8px 10px;
+      box-sizing: border-box;
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--pacman-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(8px);
+    }
+
+    .controls {
+      margin-top: 12px;
+      display: grid;
+      grid-template-columns: repeat(3, 50px);
+      grid-gap: 5px;
+      justify-content: center;
+    }
+
+    .ctrl-btn {
+      width: 50px;
+      height: 50px;
+      background-color: rgba(30, 41, 59, 0.85);
+      color: var(--text-color);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 6px;
+      font-size: 1.2rem;
+      font-weight: bold;
